@@ -16,18 +16,65 @@
   body{
     margin:0;
     font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    /* nền xanh phủ toàn trang */
+    /* nền tổng thể */
     background: radial-gradient(90% 90% at 70% 30%, #2e6af0 0%, var(--blue-700) 55%, #1e40af 100%);
-    display:flex; align-items:center; justify-content:center;  /* card ở chính giữa */
-    padding:24px;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px; position:relative; overflow:hidden;
   }
 
-  /* Card đăng nhập giữa màn hình */
+  /* ======= SCENE: chung cư vẽ bằng div ======= */
+  .scene{
+    position:absolute; inset:0; pointer-events:none; z-index:0;
+    opacity:.22; filter: blur(6px) saturate(90%);
+  }
+  .sky-sheen{
+    position:absolute; inset:-10% -10% auto -10%; height:60%;
+    background: radial-gradient(45% 40% at 75% 25%, rgba(255,255,255,.18), rgba(255,255,255,0) 60%);
+  }
+  .city{
+    position:absolute; left:50%; bottom:-2%; transform:translateX(-50%);
+    width:1400px; max-width:180vw; height:60vh;
+  }
+  .tower{
+    position:absolute; bottom:0;
+    width: var(--w,140px); height: var(--h,46vh);
+    border-radius:18px; 
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0) 30%) padding-box,
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 55%) border-box,
+      linear-gradient(180deg, rgba(46,106,240,.85), rgba(30,64,175,.9));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  /* cửa sổ – lặp bằng gradients */
+  .tower::after{
+    content:""; position:absolute; inset:10% 12% 8% 12%;
+    background:
+      repeating-linear-gradient(#0000 0 16px, #0000 0 44px, rgba(255,255,255,.5) 0 60px),
+      repeating-linear-gradient(90deg, #0000 0 22px, #0000 0 56px, rgba(255,255,255,.48) 0 70px);
+    mix-blend-mode:screen; opacity:.16; border-radius:12px;
+  }
+  /* biến thể màu/độ cao cho từng tháp */
+  .t1{ --w:150px; --h:48vh; left:2%;  background-image: linear-gradient(180deg, rgba(80,139,255,.85), rgba(34,86,231,.92)); }
+  .t2{ --w:110px; --h:42vh; left:10%; transform:skewX(-2deg); }
+  .t3{ --w:180px; --h:54vh; left:18%; }
+  .t4{ --w:130px; --h:38vh; left:29%; }
+  .t5{ --w:240px; --h:58vh; left:38%; border-radius:22px; }
+  .t6{ --w:120px; --h:36vh; left:53%; }
+  .t7{ --w:170px; --h:50vh; left:62%; }
+  .t8{ --w:140px; --h:40vh; left:73%; }
+  .t9{ --w:210px; --h:56vh; left:82%; }
+  .roof{
+    position:absolute; width:60%; height:8px; left:20%; top:-8px; border-radius:999px;
+    background: rgba(131, 131, 131, 0.38);
+    box-shadow:0 6px 24px rgba(0,0,0,.25);
+  }
+
+  /* ===== Card đăng nhập ===== */
   .card{
     width:var(--card-w); max-width:92%;
     background:#fff; border-radius:var(--radius-lg);
     box-shadow:0 18px 46px rgba(0,0,0,.25);
-    padding:28px 28px 30px; position:relative;
+    padding:28px 28px 30px; position:relative; z-index:1;
   }
 
   .brand{display:flex; align-items:flex-start; gap:12px; margin-bottom:12px;}
@@ -45,7 +92,6 @@
   }
   .brand .sub{font-size:13px; color:#6b7280}
 
-  /* Chọn loại tài khoản */
   .seg{
     display:flex; gap:8px; padding:6px; background:#f1f5f9;
     border-radius:14px; width:max-content; margin:6px 0 14px;
@@ -56,7 +102,6 @@
   }
   .seg button.active{background:#fff; color:#2563eb; box-shadow:0 1px 4px rgba(15,23,42,.1);}
 
-  /* Form */
   .field{margin:12px 0 16px}
   .label{font-size:14px; color:#0f172a; margin-bottom:6px}
   .control{position:relative}
@@ -67,7 +112,17 @@
   }
   input::placeholder{color:#9ca3af}
   input:focus, select:focus{ border-color: var(--blue-600); box-shadow:0 0 0 4px rgba(37,99,235,.15); }
-  .toggle-eye{ position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:18px; color:#64748b; user-select:none; }
+
+  /* Nút show/hide mật khẩu (SVG eye/eye-off chuẩn) */
+  .pw-toggle{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    display:inline-grid; place-items:center;
+    width:36px; height:36px; border:none; background:#f8fafc; border-radius:10px; cursor:pointer;
+    color:#64748b; transition:background .15s, box-shadow .15s, color .15s;
+  }
+  .pw-toggle:hover{ background:#eef2f7; color:#475569 }
+  .pw-toggle:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(37,99,235,.2) }
+  .pw-toggle svg{ width:20px; height:20px; }
 
   .btn{
     width:100%; height:50px; border:0; cursor:pointer;
@@ -97,32 +152,25 @@
   #toast .toast-close { margin-left:auto; background:transparent; border:none; color:#b91c1c; font-size:18px; cursor:pointer; line-height:1; }
   @keyframes toastSlide { from { transform: translate(-50%, -12px); opacity:0; } to { transform: translate(-50%, 0); opacity:1; } }
 
-  /* ===== Modal đăng ký ===== */
-  .modal{
-    display:none; position:fixed; inset:0; z-index: 10000;
-    background: rgba(2,6,23,.55);
-    align-items:center; justify-content:center; padding:18px;
-  }
-  .sheet{
-    width:520px; max-width:95%; background:#ffffff; border-radius:16px;
-    padding:22px 22px 24px; position:relative;
-    box-shadow: 0 20px 60px rgba(2,6,23,.35);
-  }
-  .sheet h3{margin:0 0 12px; text-align:center; font-size:18px; font-weight:800; color:#0f172a}
-  .close{
-    position:absolute; right:14px; top:12px; color:#ef4444; font-size:22px; cursor:pointer;
-    background:transparent; border:none;
-  }
-  .sheet .btn{ margin-top:4px; }
-  .sheet .field{ margin:10px 0 14px; }
-  .sheet select, .sheet input{ height:46px; }
-
-  @media (max-width: 520px){
-    .brand h1{font-size:28px}
-  }
 </style>
 </head>
 <body>
+
+  <!-- SCENE nền chung cư -->
+  <div class="scene" aria-hidden="true">
+    <div class="sky-sheen"></div>
+    <div class="city">
+      <div class="tower t1"><span class="roof"></span></div>
+      <div class="tower t2"><span class="roof"></span></div>
+      <div class="tower t3"><span class="roof"></span></div>
+      <div class="tower t4"><span class="roof"></span></div>
+      <div class="tower t5"><span class="roof"></span></div>
+      <div class="tower t6"><span class="roof"></span></div>
+      <div class="tower t7"><span class="roof"></span></div>
+      <div class="tower t8"><span class="roof"></span></div>
+      <div class="tower t9"><span class="roof"></span></div>
+    </div>
+  </div>
 
   <!-- Toast thông báo lỗi -->
   <div id="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -131,12 +179,11 @@
     <button class="toast-close" id="toastClose" aria-label="Đóng">✕</button>
   </div>
 
-  <!-- Card đăng nhập giữa màn hình -->
+  <!-- Card đăng nhập -->
   <div class="card" aria-label="Login Card">
-    <!-- Segmented account type -->
-    <div class="seg" id="seg">
-      <button type="button" class="active" data-role="admin">Quản lý</button>
-      <button type="button" data-role="resident">Cư dân</button>
+    <div class="seg" id="seg" role="tablist" aria-label="Chọn loại tài khoản">
+      <button type="button" class="active" data-role="admin" role="tab" aria-selected="true">Quản lý</button>
+      <button type="button" data-role="resident" role="tab" aria-selected="false">Cư dân</button>
     </div>
 
     <div class="brand">
@@ -150,86 +197,47 @@
     <div class="field">
       <div class="label">Tên đăng nhập</div>
       <div class="control">
-        <input id="username" type="text" placeholder="vd. liqi" />
+        <input id="username" type="text" placeholder="tên đăng nhập" autocomplete="username" />
       </div>
     </div>
 
     <div class="field">
       <div class="label">Mật khẩu</div>
       <div class="control">
-        <input id="password" type="password" placeholder="••••" />
-        <span class="toggle-eye" id="eye">👁️</span>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+        <!-- Nút SVG chuẩn (không dùng emoji) -->
+        <button class="pw-toggle" id="pwToggle" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện/ẩn mật khẩu">
+          <!-- eye (mặc định) -->
+          <svg id="icon-eye" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M1.5 12s3.5-7.5 10.5-7.5S22.5 12 22.5 12s-3.5 7.5-10.5 7.5S1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+          <!-- eye-off (ẩn đi, chỉ hiển thị khi đang show password) -->
+          <svg id="icon-eye-off" viewBox="0 0 24 24" fill="none" style="display:none" aria-hidden="true">
+            <path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M1.5 12S5 4.5 12 4.5c2.3 0 4.29.7 6 .0" stroke="currentColor" stroke-width="1.8" opacity=".65"/>
+            <path d="M22.5 12S19 19.5 12 19.5c-2.3 0-4.29-.7-6-.0" stroke="currentColor" stroke-width="1.8" opacity=".65"/>
+            <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8" opacity=".85"/>
+          </svg>
+        </button>
       </div>
     </div>
 
     <button class="btn" id="loginBtn">Đăng nhập</button>
 
-    <div class="muted">
-      Chưa có tài khoản? <a href="#" id="openRegister">Tạo tài khoản</a>
-    </div>
-  </div>
-
-  <!-- Modal Đăng ký -->
-  <div class="modal" id="registerModal" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="regTitle">
-      <button class="close" id="closeModal" aria-label="Đóng">✕</button>
-      <h3 id="regTitle">Đăng ký tài khoản</h3>
-
-      <div class="field">
-        <div class="label">Loại tài khoản</div>
-        <div class="control">
-          <select id="accountType">
-            <option value="admin">Quản lý chung cư</option>
-            <option value="resident">Cư dân chung cư</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field">
-        <div class="label">Tên</div>
-        <div class="control"><input id="firstName" type="text" placeholder="Nhập tên" /></div>
-      </div>
-
-      <div class="field">
-        <div class="label">Họ</div>
-        <div class="control"><input id="lastName" type="text" placeholder="Nhập họ" /></div>
-      </div>
-
-      <div class="field">
-        <div class="label">Email</div>
-        <div class="control"><input id="email" type="email" placeholder="Nhập email" /></div>
-      </div>
-
-      <div class="field">
-        <div class="label">Tên đăng nhập</div>
-        <div class="control"><input id="regUsername" type="text" placeholder="Nhập tên đăng nhập" /></div>
-      </div>
-
-      <div class="field">
-        <div class="label">Mật khẩu</div>
-        <div class="control"><input id="regPassword" type="password" placeholder="Nhập mật khẩu" /></div>
-      </div>
-
-      <button class="btn" id="registerBtn">Đăng ký</button>
-    </div>
   </div>
 
 <script>
-  // Password eye toggle
-  const pwd = document.getElementById('password');
-  const eye = document.getElementById('eye');
-  eye.addEventListener('click', () => {
-    pwd.type = (pwd.type === 'password') ? 'text' : 'password';
-    eye.style.opacity = (pwd.type === 'text') ? '1' : '0.75';
-  });
-
   // Segmented role control
   let currentRole = 'admin';
-  document.getElementById('seg').addEventListener('click', (e)=>{
+  const seg = document.getElementById('seg');
+  seg.addEventListener('click', (e)=>{
     if(e.target.tagName !== 'BUTTON') return;
-    [...e.currentTarget.children].forEach(b=>b.classList.remove('active'));
-    e.target.classList.add('active');
-    currentRole = e.target.dataset.role;   // 'admin' | 'resident'
+    [...seg.children].forEach(b=>{
+      b.classList.remove('active'); b.setAttribute('aria-selected','false');
+    });
+    e.target.classList.add('active'); e.target.setAttribute('aria-selected','true');
+    currentRole = e.target.dataset.role;
   });
 
   // Toast helpers
@@ -246,13 +254,20 @@
   function hideToast(){ toastEl.classList.remove('show'); }
   toastCloseEl.addEventListener('click', hideToast);
 
-  // Hardcode login → home.html
+  // Login (demo)
   document.getElementById('loginBtn').addEventListener('click', ()=>{
     const uname = document.getElementById('username').value.trim();
     const pass  = document.getElementById('password').value;
-    const ok = (uname === 'liqi' && pass === '1234' && currentRole === 'admin');
-    if (!ok) { showToast('Sai tên đăng nhập hoặc mật khẩu'); return; }
-    window.location.href = 'home.html';
+    if(currentRole === "admin"){
+      const ok = (uname === 'liqi' && pass === '1234');
+      if (!ok) { showToast('Sai tên đăng nhập hoặc mật khẩu'); return; }
+      else window.location.href = 'home_admin.html';
+    }
+    else{
+      const ok = (uname === 'resident' && pass === '1234');
+      if (!ok) { showToast('Sai tên đăng nhập hoặc mật khẩu'); return; }
+      else window.location.href = 'home_resident.html';
+    }
   });
 
   // Modal register open/close
@@ -278,12 +293,29 @@
     }
   });
 
-  // (Demo) xử lý nút Đăng ký – chỉ báo thành công, chưa lưu CSDL
-  document.getElementById('registerBtn').addEventListener('click', ()=>{
-    // Bạn có thể thêm validate ở đây
-    registerModal.style.display = 'none';
-    registerModal.setAttribute('aria-hidden', 'true');
-    showToast('Đăng ký thành công (demo). Bạn có thể đăng nhập ngay.');
+
+  // Toggle show/hide password với SVG eye/eye-off
+  const pwd = document.getElementById('password');
+  const pwToggle = document.getElementById('pwToggle');
+  const eye = document.getElementById('icon-eye');
+  const eyeOff = document.getElementById('icon-eye-off');
+
+  function setPwVisibility(shown){
+    pwd.type = shown ? 'text' : 'password';
+    eye.style.display = shown ? 'none' : 'block';
+    eyeOff.style.display = shown ? 'block' : 'none';
+    pwToggle.setAttribute('aria-pressed', shown ? 'true':'false');
+    pwToggle.setAttribute('aria-label', shown ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+  }
+
+  pwToggle.addEventListener('click', ()=>{
+    const showing = pwd.type === 'text';
+    setPwVisibility(!showing);
+  });
+
+  // hỗ trợ phím: Enter/Space
+  pwToggle.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pwToggle.click(); }
   });
 </script>
 </body>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlueMoon — Giới thiệu</title>
+  <style>
+    :root{
+      --bg-grad-start:#3b82f6; --bg-grad-end:#1e3a8a;
+      --text:#0b1226; --muted:#56607a; --card:#ffffff; --stroke:#e6eaf5;
+      --toolbar-h:64px; --radius:18px;
+      --shadow:0 18px 45px rgba(13,35,69,.18);
+      --shadow-2:0 10px 28px rgba(13,35,69,.16);
+    }
+    [data-theme="dark"]{
+      --bg-grad-start:#0f172a; --bg-grad-end:#0b1220;
+      --text:#e5e7eb; --muted:#a3adc2; --card:#0b1226; --stroke:#1f2a44;
+      --shadow:0 18px 45px rgba(0,0,0,.45); --shadow-2:0 10px 28px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+      overflow-x:hidden;
+    }
+
+    /* Toolbar */
+    .toolbar{
+      position:fixed; inset:0 0 auto 0; height:var(--toolbar-h);
+      display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+      padding:0 16px; z-index:20; color:#fff;
+      background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.08));
+      backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,.18);
+    }
+    .icon-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:999px; cursor:pointer;
+      background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+
+    /* Main */
+    .main{min-height:100%; padding-top:calc(var(--toolbar-h) + 28px); padding-bottom:40px;}
+    .container{width:min(980px,92vw); margin:0 auto;}
+    .title{margin:8px 0 18px; font-size:34px; font-weight:900; letter-spacing:.2px; color:#fff;}
+
+    .card{
+      background:var(--card); border:1px solid var(--stroke); border-radius:16px; box-shadow:var(--shadow-2);
+      padding:18px 18px;
+    }
+    h2{margin:0 0 10px; font-size:18px}
+    p{margin:8px 0; color:var(--muted)}
+    ul{margin:8px 0 0 18px; color:var(--muted)}
+    .grid{display:grid; gap:16px}
+    @media (min-width: 820px){ .grid{grid-template-columns: 1fr 1fr;} }
+
+    .badge{
+      display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px;
+      background:#dbeafe; color:#1e3a8a; border:1px solid #c7d2fe;
+    }
+    [data-theme="dark"] .badge{ background:#1f2937; color:#e5e7eb; border-color:#374151; }
+
+    .footer{
+      margin-top:18px; display:flex; gap:10px; justify-content:space-between; align-items:center; color:#006eff;
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--stroke);
+      background:var(--card); cursor:pointer; box-shadow:var(--shadow-2); text-decoration:none; color:inherit;
+    }
+    [data-theme="dark"] .btn{ background:#ffffff; color:#0b1226; border-color:#ffffff22; }
+    .muted{color:#cfe0ff}
+    [data-theme="dark"] .muted{color:#c7d2fe}
+  </style>
+</head>
+<body>
+  <!-- Toolbar -->
+  <header class="toolbar" role="banner">
+    <button class="icon-btn" id="Back"></button>
+    <div></div>
+    <span class="badge">BlueMoon v1.0.0</span>
+  </header>
+
+  <!-- Content -->
+  <main class="main">
+    <div class="container">
+      <h1 class="title">Giới thiệu BlueMoon</h1>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Tổng quan</h2>
+          <p><strong>BlueMoon</strong> là bảng điều khiển quản trị chung cư: quản lý cư dân, toà nhà, vé bảo trì,
+            hoá đơn, bãi xe, lịch sự kiện và cài đặt hệ thống. Giao diện hỗ trợ <em>light/dark</em>, đa ngôn ngữ (VI/EN).</p>
+          <p><span class="badge">Phiên bản</span> v1.0.0</p>
+        </section>
+
+        <section class="card">
+          <h2>Kiến trúc giao diện</h2>
+          <ul>
+            <li><strong>SVG sprite</strong> dùng chung icon cho toàn trang.</li>
+            <li><strong>LocalStorage</strong> nhớ theme và ngôn ngữ.</li>
+            <li><strong>Grid + Pager</strong> 6 ô / trang, chuyển trang mượt.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Chức năng chính</h2>
+          <ul>
+            <li>Cư dân & Căn hộ — quản lý hồ sơ, hợp đồng, căn hộ.</li>
+            <li>Tòa nhà & Mặt bằng — sơ đồ block/tầng, phòng ban.</li>
+            <li>Bảo trì & Ticket — tiếp nhận và theo dõi xử lý.</li>
+            <li>Hóa đơn & Thanh toán — phí dịch vụ, xuất hóa đơn.</li>
+            <li>Bãi xe & Thẻ từ — chỗ đậu, thẻ, lịch sử ra/vào.</li>
+            <li>Lịch sự kiện — sự kiện cộng đồng, bảo trì định kỳ.</li>
+            <li>Cài đặt hệ thống — vai trò, quyền, cấu hình.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Cách dùng nhanh</h2>
+          <ul>
+            <li>Bấm ô chức năng để mở (bản demo hiển thị thông báo tạm).</li>
+            <li>Bật <strong>Giao diện</strong> trong thanh bên để chuyển sáng/tối.</li>
+            <li>Chọn <strong>Ngôn ngữ</strong> VI/EN, tự ghi nhớ cho lần sau.</li>
+            <li>Dùng nút <strong>‹ / ›</strong> để xem các mục ở trang bên cạnh.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>FAQ</h2>
+          <p><strong>Q:</strong> Tính năng thật ở đâu?<br>
+             <strong>A:</strong> Bản này là wireframe; hãy gắn router/URL thực vào sự kiện click.</p>
+          <p><strong>Q:</strong> Thay icon thế nào?<br>
+             <strong>A:</strong> Chỉ cần sửa khối <code>&lt;symbol&gt;</code> trong sprite ở trang chủ.</p>
+        </section>
+
+        <section class="card">
+          <h2>Giấy phép & Liên hệ</h2>
+          <p>© 2025 BlueMoon. Phát hành cho mục đích học tập và nội bộ. Mã nguồn có thể dùng theo giấy phép MIT (tuỳ cấu hình dự án của bạn).</p>
+          <p class="muted">Liên hệ: admin@bluemoon.local</p>
+        </section>
+      </div>
+
+      <div class="footer">
+        <a class="btn" href="home_admin.html">← Về Trang chủ</a>
+        <span class="muted">Build date: 2025-10-04 • UI demo</span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Đồng bộ theme với trang chủ nếu đã lưu
+    const theme = localStorage.getItem('bm_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    
+  </script>
+  <script>
+    // Nút Quay lại
+    document.getElementById('Back').innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>`;
+    document.getElementById('Back').addEventListener('click', () => { window.location.href = 'home_admin.html'; });
+    </script>
+</body>
+</html>
