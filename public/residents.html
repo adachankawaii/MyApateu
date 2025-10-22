@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlueMoon — Cư dân & Căn hộ</title>
+  <style>
+    :root{
+      --bg-grad-start:#3b82f6; --bg-grad-end:#1e3a8a;
+      --text:#0b1226; --muted:#56607a; --card:#ffffff; --stroke:#e6eaf5;
+      --radius:16px; --shadow:0 18px 45px rgba(13,35,69,.18); --shadow-2:0 10px 28px rgba(13,35,69,.16);
+    }
+    [data-theme="dark"]{
+      --bg-grad-start:#0f172a; --bg-grad-end:#0b1220;
+      --text:#e5e7eb; --muted:#a3adc2; --card:#0b1226; --stroke:#1f2a44;
+      --shadow:0 18px 45px rgba(0,0,0,.45); --shadow-2:0 10px 28px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{color:var(--text);background:radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);}
+
+    /* Hero slideshow */
+    .hero{position:relative;height:220px;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.25);
+      background:linear-gradient(120deg, rgba(255,255,255,.12), rgba(255,255,255,.04));backdrop-filter: blur(4px);}
+    .slides{position:absolute; inset:0; display:grid}
+    .slide{grid-area:1/1;background-size:cover;background-position:center;opacity:0;transform:scale(1.04);animation:fadeZoom 18s infinite;}
+    .slide:nth-child(1){animation-delay:0s}.slide:nth-child(2){animation-delay:6s}.slide:nth-child(3){animation-delay:12s}
+    @keyframes fadeZoom{0%{opacity:0;transform:scale(1.04)}6%{opacity:1;transform:scale(1)}28%{opacity:1}33%{opacity:0}100%{opacity:0}}
+    .overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,6,23,.55), rgba(2,6,23,.35) 60%, transparent)}
+    .toolbar{position:absolute;left:0;right:0;top:0;height:64px;z-index:3;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:0 14px;color:#fff}
+    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);cursor:pointer}
+    .hero h1{z-index:3;position:absolute;left:20px;bottom:18px;margin:0;color:#fff;font-size:24px;font-weight:900;letter-spacing:.3px;text-shadow:0 6px 22px rgba(0,0,0,.35)}
+
+    /* Layout */
+    .wrap{width:min(1180px,92vw); margin:18px auto 40px; display:grid; grid-template-columns: 360px 1fr; gap:18px}
+    @media (max-width: 980px){ .wrap{grid-template-columns:1fr} }
+    .panel{background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); box-shadow:var(--shadow-2); overflow:hidden}
+    .left .head{display:flex; gap:10px; padding:12px; border-bottom:1px solid var(--stroke); background:linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,.35))}
+    [data-theme="dark"] .left .head{background:linear-gradient(180deg, rgba(17,24,39,.65), rgba(17,24,39,.35))}
+    .search{flex:1; display:flex; align-items:center; gap:8px; height:38px; padding:0 10px; border-radius:999px; background:#ffffff; border:1px solid var(--stroke)}
+    [data-theme="dark"] .search{background:#0b1226}
+    .search input{flex:1;border:0;outline:0;background:transparent;color:var(--text)}
+    .flt{display:grid; grid-template-columns: 1fr 1fr; gap:8px}
+    .flt select{height:38px;border-radius:10px;border:1px solid var(--stroke);background:var(--card);color:var(--text);padding:0 10px}
+
+    .list{max-height:calc(100dvh - 360px); overflow:auto; padding:8px}
+    .room{border:1px solid var(--stroke); border-radius:14px; padding:10px; margin:8px 4px; display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; cursor:pointer; background:color-mix(in oklab, var(--card) 96%, transparent)}
+    .room:hover{box-shadow:var(--shadow-2)}
+    .room .badge{font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--stroke); color:var(--muted)}
+    .room .name{font-weight:900; letter-spacing:.2px}
+    .room .sub{font-size:12px; color:var(--muted)}
+    .active{outline:2px solid #2563eb}
+
+    .right .body{padding:14px}
+    .kv{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 720px){ .kv{grid-template-columns:1fr} }
+    .card{border:1px solid var(--stroke); border-radius:14px; padding:12px; background:var(--card)}
+    .card h4{margin:0 0 8px; font-size:14px}
+    table{width:100%; border-collapse:collapse}
+    th, td{border-bottom:1px solid var(--stroke); text-align:left; padding:8px}
+    th{font-size:12px; color:var(--muted); letter-spacing:.2px}
+    .empty{padding:28px; text-align:center; color:var(--muted)}
+
+    /* Buttons (for forms) */
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid var(--stroke);background:var(--card);cursor:pointer}
+
+ /* ==== Modal sizing & scroll ==== */
+#modalCard{
+  /* rộng hơn chút để 3 cột thoáng, vẫn fit viewport */
+  width: min(1000px, 96vw) !important;
+  max-height: 92vh;                /* không vượt chiều cao màn */
+  display: flex;
+  flex-direction: column;
+}
+
+/* phần form là vùng cuộn; tiêu đề & actions không cuộn */
+#modalForm{
+  padding: 12px !important;
+  overflow: auto;
+  /* chừa chỗ cho header + sticky actions ~ 120px */
+  max-height: calc(92vh - 120px);
+}
+
+/* ==== 3 cột card hiện đại, gọn dọc hơn ==== */
+.modal-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 1100px){ .modal-grid{ grid-template-columns: 1fr 1fr; } }
+@media (max-width: 680px){ .modal-grid{ grid-template-columns: 1fr; } }
+
+.cardx{
+  border:1px solid var(--stroke);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-2);
+  overflow:hidden;
+}
+.cardx .cardx-head{
+  padding:8px 12px;                /* header card thấp hơn */
+  border-bottom:1px solid var(--stroke);
+  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.25));
+  font-weight:900; font-size:14px;
+}
+[data-theme="dark"] .cardx .cardx-head{
+  background:linear-gradient(180deg, rgba(17,24,39,.55), rgba(17,24,39,.25));
+}
+.cardx .cardx-body{
+  padding:10px 12px;               /* body card gọn lại */
+  display:grid; gap:8px;
+}
+
+/* ==== Field compact ==== */
+.field label{font-size:12px; color:var(--muted); display:block; margin-bottom:4px}
+.field input,.field select{
+  width:100%;
+  height: 34px;                    /* thấp hơn 38px */
+  padding:0 10px;
+  border:1px solid var(--stroke);
+  border-radius:8px;               /* bo góc gọn lại */
+  background:var(--card); color:var(--text); outline:none;
+}
+
+/* ==== Sticky actions (nút luôn thấy) ==== */
+.actions-row{
+  position: sticky;
+  bottom: 0;
+  padding-top: 10px;
+  display:flex; gap:8px; justify-content:flex-end;
+  background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--card) 92%, transparent));
+  border-top: 1px solid var(--stroke);
+}
+
+/* Nút trong modal nhìn “đầm” hơn một chút */
+.actions-row .btn{
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+
+  </style>
+</head>
+
+<body>
+  <!-- ==== Modal overlay (forms) ==== -->
+  <div id="modalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50">
+    <div id="modalCard" style="width:min(560px,94vw);background:var(--card);color:var(--text);border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow);overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--stroke)">
+        <h3 id="modalTitle" style="margin:0;font-size:16px;font-weight:900">Form</h3>
+        <button id="modalClose" class="btn">✕</button>
+      </div>
+      <form id="modalForm" style="padding:14px;display:grid;gap:10px"><!-- fields inject here --></form>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="slides">
+      <div class="slide" style="background-image:radial-gradient(1200px 700px at 70% 20%, rgba(37,99,235,.35), transparent), url('https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1500&auto=format&fit=crop');"></div>
+      <div class="slide" style="background-image:radial-gradient(1200px 700px at 70% 20%, rgba(37,99,235,.35), transparent), url('https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1500&auto=format&fit=crop');"></div>
+      <div class="slide" style="background-image:radial-gradient(1200px 700px at 70% 20%, rgba(37,99,235,.35), transparent), url('https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=1500&auto=format&fit=crop');"></div>
+    </div>
+    <div class="overlay"></div>
+    <div class="toolbar">
+      <button class="icon-btn" id="Back" title="Quay lại">⟵</button>
+      <span></span>
+      <button class="icon-btn" id="Theme" title="Đổi giao diện">☼</button>
+    </div>
+    <h1>Cư dân & Căn hộ</h1>
+  </section>
+
+  <main class="wrap">
+    <section class="panel left" aria-label="Danh sách phòng">
+      <div class="head">
+        <label class="search" style="flex:1">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#64748b" stroke-width="1.6"/><path d="M20 20l-3.2-3.2" stroke="#64748b" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="q" placeholder="Tìm số phòng hoặc chủ hộ..." />
+        </label>
+        <div class="flt">
+          
+          <select id="fltStatus">
+            <option value="">Tất cả trạng thái</option>
+            <option value="rental">Đang thuê</option>
+            <option value="sold">Đã bán</option>
+          </select>
+          <select id="fltType">
+            <option value="">Tất cả loại phòng</option>
+            <option value="studio">Studio</option>
+            <option value="1_ngủ">1 ngủ</option>
+            <option value="2_ngủ">2 ngủ</option>
+            <option value="khác">Khác</option>
+          </select>
+        </div>
+      </div>
+      <div class="list" id="roomList" role="list"></div>
+    </section>
+
+    <section class="panel right" aria-label="Chi tiết phòng">
+      <div class="body" id="detail">
+        <div class="empty">Chọn một phòng để xem chi tiết.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Theme + back
+    const theme = localStorage.getItem('bm_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('Theme').onclick = ()=>{
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur==='light'?'dark':'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('bm_theme', next);
+    };
+    document.getElementById('Back').onclick = ()=> window.location.href='home_admin.html';
+
+    // State
+    const state = { rooms:[], currentRoomId:null, cacheResidents:new Map(), selectedResidents: new Set() };
+
+    // Fetch helpers
+    async function getJSON(url){
+      const r = await fetch(url, { credentials:'include' });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }
+    async function postJSON(url, payload){
+      const r = await fetch(url, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        credentials:'include', body: JSON.stringify(payload)
+      });
+      const data = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(data.message || ('HTTP '+r.status));
+      return data;
+    }
+    async function putJSON(url, payload){
+      const r = await fetch(url, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        credentials:'include', body: JSON.stringify(payload)
+      });
+      const data = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(data.message || ('HTTP '+r.status));
+      return data;
+    }
+
+    async function loadRooms(params={}){
+      const qs = new URLSearchParams(params).toString();
+      return getJSON('/api/rooms' + (qs?('?'+qs):''));
+    }
+    async function loadResidents(roomId){
+      if (state.cacheResidents.has(roomId)) return state.cacheResidents.get(roomId);
+      const data = await getJSON(`/api/rooms/${roomId}/persons`); // <-- sửa đúng endpoint
+      state.cacheResidents.set(roomId, data);
+      return data;
+    }
+
+    // Render list
+    function renderRooms(){
+      const box = document.getElementById('roomList');
+      box.innerHTML = '';
+      if(!state.rooms.length){ box.innerHTML='<div class="empty">Không có phòng.</div>'; return; }
+      state.rooms.forEach(r=>{
+        const el = document.createElement('div');
+        el.className = 'room' + (state.currentRoomId===r.id?' active':'');
+        el.innerHTML = `
+          <div class="badge">${r.status || 'N/A'}</div>
+          <div>
+            <div class="name">Phòng ${r.room_no} • ${r.room_type||'--'}</div>
+            <div class="sub">Chủ hộ: ${r.head_name||'-'}${r.head_phone?` • ${r.head_phone}`:''}</div>
+          </div>
+          <div class="sub">${(r.occupants_count_calc ?? r.occupants_count) || 0} người</div>
+        `;
+        el.onclick = ()=> selectRoom(r.id);
+        box.appendChild(el);
+      });
+    }
+
+    // Render detail
+    // Render detail
+async function renderDetail(){
+  const d = document.getElementById('detail');
+  const room = state.rooms.find(x=>x.id===state.currentRoomId);
+  if(!room){ d.innerHTML='<div class="empty">Chọn một phòng để xem chi tiết.</div>'; return; }
+
+  const people = await loadResidents(room.id);
+
+  // toolbar xoá nhiều
+  const selectedCount = state.selectedResidents.size;
+  const toolbarHTML = people.length ? `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <button id="btnBulkDelete" class="btn" style="background:#ef4444;color:#fff;border-color:#ef4444"
+              ${selectedCount ? '' : 'disabled'}>🗑 Xoá đã chọn (${selectedCount})</button>
+      <span class="sub"></span>
+    </div>
+  ` : '';
+
+  d.innerHTML = `
+    <div class="kv">
+      <div class="card">
+        <h4>Thông tin phòng</h4>
+        <table>
+          <tr><th>Số phòng</th><td>${room.room_no}</td></tr>
+          <tr><th>Loại phòng</th><td>${room.room_type||'-'}</td></tr>
+          <tr><th>Trạng thái</th><td>${room.status||'-'}</td></tr>
+          <tr><th>Ngày bắt đầu HĐ</th><td>${room.contract_start||'-'}</td></tr>
+          <tr><th>Ngày kết thúc HĐ</th><td>${room.contract_end||'-'}</td></tr>
+          <tr><th>Chủ hộ</th><td>${room.head_name||'-'}</td></tr>
+          <tr><th>SĐT chủ hộ</th><td>${room.head_phone||'-'}</td></tr>
+          <tr><th>Số người (tính)</th><td>${room.occupants_count_calc ?? '-'}</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Thao tác</h4>
+        <button class="btn" id="btnAddRoom" style="margin-left:8px">+ Thêm phòng</button>
+        <button class="btn" id="btnAddpersons" style="margin-left:8px">Thêm cư dân</button>
+        <button class="btn" id="btnDeleteRoom" style="margin-left:8px;background:#ef4444;color:#fff;border-color:#ef4444">Xóa phòng</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h4>Danh sách cư dân</h4>
+      ${people.length ? `
+        ${toolbarHTML}
+        <table>
+          <thead><tr>
+            <th style="width:38px"></th>
+            <th>Họ tên</th><th>CCCD</th><th>Quan hệ</th><th>Nghề nghiệp</th>
+            <th>Ngày sinh</th><th>Quê quán</th><th>Điện thoại</th>
+          </tr></thead>
+          <tbody>
+            ${people.map(p=>{
+              const isHead = (p.relation_to_head === 'Chủ hộ');
+              const checked = state.selectedResidents.has(p.id) ? 'checked' : '';
+              const cb = isHead ? '' :
+                `<input type="checkbox" data-rid="${p.id}" ${checked} aria-label="Chọn cư dân ${p.full_name}">`;
+              return `
+                <tr>
+                  <td>${cb}</td>
+                  <td>${p.full_name||''}</td>
+                  <td>${p.cccd||''}</td>
+                  <td>${p.relation_to_head||''}</td>
+                  <td>${p.occupation||''}</td>
+                  <td>${p.dob||''}</td>
+                  <td>${p.hometown||''}</td>
+                  <td>${p.phone||''}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      ` : '<div class="empty">Chưa có cư dân trong phòng này.</div>'}
+    </div>
+  `;
+
+  // attach actions cũ
+  document.getElementById('btnAddpersons').addEventListener('click', () => openResidentForm(room));
+  document.getElementById('btnAddRoom').addEventListener('click', openCreateRoomBundleForm);
+  // Xoá phòng (xoá cả cư dân + tài khoản chủ hộ)
+  document.getElementById('btnDeleteRoom').addEventListener('click', async ()=>{
+    // lấy danh sách cư dân đã load ở trên
+    const people = await loadResidents(room.id).catch(()=>[]);
+    const head = people.find(p => p.relation_to_head === 'Chủ hộ');
+    const msg = [
+      `Bạn chắc chắn muốn xoá PHÒNG ${room.room_no}?`,
+      `• Sẽ xoá toàn bộ cư dân trong phòng (kể cả Chủ hộ).`,
+      `• Sẽ xoá tài khoản của Chủ hộ${head ? ` (${head.full_name})` : ''}.`,
+      `• Thao tác này không thể hoàn tác!`
+    ].join('\n');
+
+    if (!confirm(msg)) return;
+
+    try{
+      const r = await fetch(`/api/rooms/${room.id}`, { method:'DELETE', credentials:'include' });
+      const data = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(data.message || `HTTP ${r.status}`);
+
+      // làm tươi danh sách phòng
+      state.cacheResidents.delete(room.id);
+      state.selectedResidents.clear();
+      state.rooms = await loadRooms({
+        q: document.getElementById('q').value.trim(),
+        status: document.getElementById('fltStatus').value,
+        room_type: document.getElementById('fltType').value
+      }).catch(()=>state.rooms);
+
+      renderRooms();
+      // chọn phòng đầu tiên còn lại nếu có, nếu không hiển thị rỗng
+      if (state.rooms[0]) {
+        await selectRoom(state.rooms[0].id);
+      } else {
+        const d = document.getElementById('detail');
+        d.innerHTML = '<div class="empty">Chưa có phòng nào.</div>';
+      }
+      alert('Đã xoá phòng và dữ liệu liên quan.');
+    }catch(err){
+      alert(err.message || 'Không xoá được phòng');
+    }
+  });
+
+  // ====== NEW: checkbox chọn cư dân (không cho Chủ hộ) ======
+  d.querySelectorAll('input[type="checkbox"][data-rid]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const id = Number(cb.getAttribute('data-rid'));
+      if (cb.checked) state.selectedResidents.add(id);
+      else state.selectedResidents.delete(id);
+      const btn = d.querySelector('#btnBulkDelete');
+      if (btn){
+        const c = state.selectedResidents.size;
+        btn.disabled = c === 0;
+        btn.textContent = `🗑 Xoá đã chọn (${c})`;
+      }
+    });
+  });
+
+  // ====== NEW: nút xoá đã chọn ======
+  const btnDel = d.querySelector('#btnBulkDelete');
+  if (btnDel){
+    btnDel.addEventListener('click', async ()=>{
+      const ids = Array.from(state.selectedResidents);
+      if (!ids.length) return;
+      if (!confirm(`Xoá ${ids.length} cư dân đã chọn?`)) return;
+
+      try{
+        // YÊU CẦU backend có /api/persons/bulk_delete (đã gợi ý ở bước trước)
+        await postJSON('/api/persons/bulk_delete', { ids });
+
+        // refresh bảng + đếm
+        state.selectedResidents.clear();
+        state.cacheResidents.delete(room.id);
+        await renderDetail();
+
+        state.rooms = await loadRooms({
+          q: document.getElementById('q').value.trim(),
+          status: document.getElementById('fltStatus').value,
+          room_type: document.getElementById('fltType').value
+        }).catch(()=>state.rooms);
+        renderRooms();
+      }catch(err){
+        alert(err.message || 'Không xoá được cư dân');
+      }
+    });
+  }
+}
+
+
+    async function selectRoom(id){
+      state.currentRoomId = id;
+      state.selectedResidents.clear();   // reset các checkbox khi đổi phòng
+      renderRooms();
+      await renderDetail();
+    }
+
+
+    // Filters & search
+    async function applyFilter(){
+      const q = document.getElementById('q').value.trim();
+      const status = document.getElementById('fltStatus').value;
+      const room_type = document.getElementById('fltType').value;
+      state.rooms = await loadRooms({ q, status, room_type }).catch(()=>[]);
+      renderRooms();
+      if (state.rooms.length && !state.rooms.find(r=>r.id===state.currentRoomId)){
+        await selectRoom(state.rooms[0].id);
+      }
+    }
+
+    document.getElementById('q').addEventListener('input', ()=>{
+      clearTimeout(window.__qTimer);
+      window.__qTimer = setTimeout(applyFilter, 250);
+    });
+    document.getElementById('fltStatus').addEventListener('change', applyFilter);
+    document.getElementById('fltType').addEventListener('change', applyFilter);
+
+    // ===== Modal helpers =====
+    const $overlay = document.getElementById('modalOverlay');
+    const $title   = document.getElementById('modalTitle');
+    const $form    = document.getElementById('modalForm');
+    document.getElementById('modalClose').onclick = closeModal;
+    $overlay.addEventListener('click', (e)=>{ if(e.target === $overlay) closeModal(); });
+
+    function openModal(title, innerHTML, onSubmit){
+      $title.textContent = title;
+      $form.innerHTML = innerHTML;
+      $form.onsubmit = async (e)=>{
+        e.preventDefault();
+        const fd = new FormData($form);
+        const data = Object.fromEntries(fd.entries());
+        try{
+          await onSubmit(data);
+          closeModal();
+        }catch(err){
+          alert(err.message || 'Có lỗi xảy ra');
+        }
+      };
+      $overlay.style.display = 'flex';
+    }
+    function closeModal(){
+      $overlay.style.display = 'none';
+      $form.innerHTML = '';
+      $form.onsubmit = null;
+    }
+
+    // ===== Forms =====
+    // ==== helper chuẩn, có credentials để gửi cookie phiên ====
+    async function postJSON(url, payload){
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        credentials: 'include',        // gửi cookie session
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json().catch(()=> ({}));
+      if(!r.ok){
+        const msg = data?.message || `HTTP ${r.status}`;
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    // ===== Create bundle: Room + User (+ Person if role=user) =====
+    function openCreateRoomBundleForm(){
+      const html = `
+        <div class="modal-grid">
+
+          <!-- Card 1: Phòng -->
+          <div class="cardx" id="roomCard">
+            <div class="cardx-head">Phòng</div>
+            <div class="cardx-body">
+              <div class="field">
+                <label>Số phòng*</label>
+                <input name="room_no" required>
+              </div>
+
+              <div class="field">
+                <label>Loại phòng</label>
+                <select name="room_type">
+                  <option value=""></option>
+                  <option value="studio">studio</option>
+                  <option value="1_ngủ">1 ngủ</option>
+                  <option value="2_ngủ">2 ngủ</option>
+                  <option value="khác">khác</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Trạng thái</label>
+                <select name="status">
+                  <option value=""></option>
+                  <option value="rental">Cho thuê</option>
+                  <option value="sold">Đã bán</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>HĐ bắt đầu (YYYY-MM-DD)</label>
+                <input name="contract_start" placeholder="2025-10-10">
+              </div>
+
+              <div class="field">
+                <label>HĐ kết thúc (YYYY-MM-DD)</label>
+                <input name="contract_end" placeholder="2030-10-10">
+              </div>
+
+              <div class="field">
+                <label>Số người (tuỳ chọn)</label>
+                <input name="occupants_count">
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Tài khoản -->
+          <div class="cardx" id="accountCard">
+            <div class="cardx-head">Tài khoản</div>
+            <div class="cardx-body">
+              <div class="field">
+                <label>Tên đăng nhập*</label>
+                <input name="username" required>
+              </div>
+
+              <div class="field">
+                <label>Mật khẩu*</label>
+                <input name="password" type="password" required>
+              </div>
+
+              <div class="field">
+                <label>Số điện thoại</label>
+                <input name="phone">
+              </div>
+              <div class="field">
+                <label>Email</label>
+                <input name="email" type="email" placeholder="name@example.com">
+              </div>
+
+              <div class="field">
+                <label>Họ tên hiển thị*</label>
+                <input name="full_name" required>
+              </div>
+
+              <div class="field">
+                <label>Vai trò*</label>
+                <select name="role" required>
+                  <option value="user" selected>user</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Chủ hộ (ẩn khi role=admin) -->
+          <div class="cardx" id="personCard">
+            <div class="cardx-head">Chủ hộ (ghi vào bảng persons khi role = user)</div>
+            <div class="cardx-body">
+              <div class="field">
+                <label>Họ tên chủ hộ*</label>
+                <input name="p_full_name" required>
+              </div>
+
+              <div class="field">
+                <label>CCCD</label>
+                <input name="p_cccd">
+              </div>
+
+              <div class="field">
+                <label>Dân tộc</label>
+                <input name="p_ethnicity">
+              </div>
+
+              <div class="field">
+                <label>Nghề nghiệp</label>
+                <input name="p_occupation">
+              </div>
+
+              <div class="field">
+                <label>Ngày sinh (YYYY-MM-DD)</label>
+                <input name="p_dob" placeholder="1980-10-20">
+              </div>
+
+              <div class="field">
+                <label>Quê quán</label>
+                <input name="p_hometown">
+              </div>
+
+              <div class="field">
+                <label>Quan hệ với chủ hộ</label>
+                <select name="p_relation_to_head">
+                  <option value="Chủ hộ" selected>Chủ hộ</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Điện thoại</label>
+                <input name="p_phone">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="actions-row">
+          <button type="button" class="btn" onclick="closeModal()">Hủy</button>
+          <button type="submit" class="btn" style="background:#2563eb;color:#fff;border-color:#2563eb">Tạo</button>
+        </div>
+
+      `;
+
+      openModal('Thêm phòng mới + tài khoản', html, async (data)=>{
+        try{
+        // 1) Chuẩn hoá: field rỗng -> bỏ, số -> ép kiểu
+        const clean = (obj)=>{ Object.keys(obj).forEach(k=> (obj[k]==='' ? delete obj[k] : 0)); return obj; };
+        clean(data);
+        if (data.occupants_count) data.occupants_count = Number(data.occupants_count);
+        
+        // 2) Chuẩn bị payload cho API bundle /api/rooms (POST)
+        const payload = {
+          room_no: data.room_no,
+          room_type: data.room_type || null,
+          status: data.status || null,
+          contract_start: data.contract_start || null,
+          contract_end: data.contract_end || null,
+          occupants_count: data.occupants_count ?? null,
+
+          username: data.username,
+          password: data.password,
+          phone: data.phone || null,
+          email: data.email || null,  
+          full_name: data.full_name,
+          role: data.role,
+
+          // chỉ gửi person_data khi role = 'user'
+          person_data: (data.role === 'user') ? {
+            full_name: data.p_full_name,
+            cccd: data.p_cccd || null,
+            ethnicity: data.p_ethnicity || null,
+            occupation: data.p_occupation || null,
+            dob: data.p_dob || null,
+            hometown: data.p_hometown || null,
+            relation_to_head: data.p_relation_to_head || 'Chủ hộ',
+            phone: data.p_phone || null
+          } : undefined
+        };
+
+        const res = await postJSON('/api/rooms', payload); // backend sẽ: tạo user -> tạo room(user_id) -> nếu user => tạo person & link
+        // Làm tươi danh sách + chọn phòng mới tạo
+        state.rooms = await loadRooms().catch(()=>state.rooms);
+        renderRooms();
+        const newId = res?.room?.id || (state.rooms[state.rooms.length-1]?.id); // fallback
+        if (newId) await selectRoom(newId);
+        alert('Tạo phòng + tài khoản thành công!');
+        }catch(err){
+          // lỗi hay gặp: 409 trùng username/room_no; 400 thiếu field
+          alert(err.message || 'Có lỗi xảy ra khi tạo phòng');
+          throw err;  // để openModal bắt & không tự đóng nếu bạn muốn
+        }
+      });
+
+      // Toggle khối chủ hộ theo role
+      const $role = $form.querySelector('select[name="role"]');
+      const $personBlock = $form.querySelector('#personCard');
+      const syncPersonBlock = ()=>{
+        $personBlock.style.display = ($role.value==='user') ? '' : 'none';
+        $form.querySelector('[name="p_full_name"]').required = ($role.value==='user');
+      };
+      $role.addEventListener('change', syncPersonBlock);
+      syncPersonBlock();
+
+    }
+
+    function openResidentForm(room){
+      const html = `
+        <input type="hidden" name="room_id" value="${room.id}">
+        <label>Họ tên*<br><input name="full_name" required style="width:100%"></label>
+        <label>CCCD<br><input name="cccd" style="width:100%"></label>
+        <label>Dân tộc<br><input name="ethnicity" style="width:100%"></label>
+        <label>Nghề nghiệp<br><input name="occupation" style="width:100%"></label>
+        <label>Ngày sinh (YYYY-MM-DD)<br><input name="dob" placeholder="1980-10-20" style="width:100%"></label>
+        <label>Quê quán<br><input name="hometown" style="width:100%"></label>
+        <label>Quan hệ với chủ hộ<br>
+          <select name="relation_to_head" style="width:100%">
+            <option value="Cư dân">Cư dân</option>
+          </select>
+        </label>
+        <label>Điện thoại<br><input name="phone" style="width:100%"></label>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+          <button type="button" class="btn" onclick="closeModal()">Hủy</button>
+          <button type="submit" class="btn" style="background:#2563eb;color:#fff;border-color:#2563eb">Lưu</button>
+        </div>
+      `;
+      openModal(`Thêm cư dân • Phòng ${room.room_no}`, html, async (data)=>{
+        await postJSON('/api/persons', data);
+        // Refresh
+        state.cacheResidents.delete(room.id);
+        await renderDetail();
+        state.rooms = await loadRooms({
+          q: document.getElementById('q').value.trim(),
+          status: document.getElementById('fltStatus').value,
+          room_type: document.getElementById('fltType').value
+        }).catch(()=>state.rooms);
+        renderRooms();
+      });
+    }
+    
+    // Boot
+    (async function init(){
+      try{
+        state.rooms = await loadRooms();
+        renderRooms();
+        if (state.rooms[0]) await selectRoom(state.rooms[0].id);
+      }catch(e){
+        console.error(e);
+        document.getElementById('roomList').innerHTML = '<div class="empty">Lỗi tải dữ liệu.</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

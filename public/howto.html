@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlueMoon — Cách dùng</title>
+  <style>
+    :root{
+      --bg-grad-start:#3b82f6; --bg-grad-end:#1e3a8a;
+      --text:#0b1226; --muted:#56607a; --card:#ffffff; --stroke:#e6eaf5;
+      --toolbar-h:64px; --radius:18px;
+      --shadow:0 18px 45px rgba(13,35,69,.18);
+      --shadow-2:0 10px 28px rgba(13,35,69,.16);
+      --dx:24px;
+    }
+    [data-theme="dark"]{
+      --bg-grad-start:#0f172a; --bg-grad-end:#0b1220;
+      --text:#e5e7eb; --muted:#a3adc2; --card:#0b1226; --stroke:#1f2a44;
+      --shadow:0 18px 45px rgba(0,0,0,.45); --shadow-2:0 10px 28px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+      overflow-x:hidden;
+    }
+
+    .toolbar{
+      position:fixed; inset:0 0 auto 0; height:var(--toolbar-h);
+      display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+      padding:0 16px; z-index:20; color:#fff;
+      background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.08));
+      backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,.18);
+    }
+    .icon-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:999px; cursor:pointer;
+      background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 6px 16px rgba(0,0,0,.25); transition:transform .12s ease, background .12s ease;
+    }
+    .icon-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.2)}
+
+    .main{min-height:100%; padding-top:calc(var(--toolbar-h) + 28px); padding-bottom:40px;}
+    .container{width:min(980px,92vw); margin:0 auto;}
+    .title{margin:8px 0 18px; font-size:34px; font-weight:900; letter-spacing:.2px; color:#fff;}
+
+    .card{
+      background:var(--card); border:1px solid var(--stroke); border-radius:16px; box-shadow:var(--shadow-2);
+      padding:18px 18px; margin-bottom:16px;
+    }
+    h2{margin:0 0 10px; font-size:18px}
+    p{margin:8px 0; color:var(--muted)}
+    ul{margin:8px 0 0 18px; color:var(--muted)}
+    ol{margin:8px 0 0 18px; color:var(--muted)}
+    code{background:#eef2ff; padding:2px 6px; border-radius:6px}
+    [data-theme="dark"] code{background:#1f2937; color:#e5e7eb}
+
+    .badge{
+      display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px;
+      background:#dbeafe; color:#1e3a8a; border:1px solid #c7d2fe;
+    }
+    [data-theme="dark"] .badge{ background:#1f2937; color:#e5e7eb; border-color:#374151; }
+
+    .footer{
+      margin-top:18px; display:flex; gap:10px; justify-content:space-between; align-items:center; color:#006eff;
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--stroke);
+      background:var(--card); cursor:pointer; box-shadow:var(--shadow-2); text-decoration:none; color:inherit;
+    }
+    [data-theme="dark"] .btn{ background:#ffffff; color:#0b1226; border-color:#ffffff22; }
+    .muted{color:#cfe0ff}
+    [data-theme="dark"] .muted{color:#c7d2fe}
+
+    /* Slide & Stagger */
+    .page.anim { animation: slideIn .28s ease both; }
+    @keyframes slideIn { from{opacity:0; transform:translateX(var(--dx))} to{opacity:1; transform:none} }
+    .stagger > * { opacity:0; transform: translateY(12px); }
+    .stagger > *.in { animation: fadeUp .32s ease both; }
+    @keyframes fadeUp{ from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none} }
+
+    @media (prefers-reduced-motion: reduce){
+      *{transition:none !important; animation:none !important}
+      .stagger > * { opacity:1; transform:none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" role="banner">
+    <button class="icon-btn" id="Back"></button>
+    <div></div>
+    <span class="badge">BlueMoon v1.0.0</span>
+  </header>
+
+  <main class="main">
+    <div class="container page" id="pageRoot">
+      <h1 class="title">Cách dùng BlueMoon</h1>
+
+      <div class="stagger" id="stagger">
+        <section class="card">
+          <h2>Bắt đầu nhanh</h2>
+          <ol>
+            <li>Mở <strong>Trang chủ</strong> và chọn chức năng (ô thẻ) bạn muốn thao tác.</li>
+            <li>Dùng thanh tìm kiếm trên cùng để <em>tìm nhanh</em> cư dân, căn hộ, ticket.</li>
+            <li>Mở <strong>Sidebar</strong> (nút menu) để đổi <em>Theme</em> (Sáng/Tối) hoặc <em>Ngôn ngữ</em> (VI/EN).</li>
+          </ol>
+        </section>
+
+        <section class="card">
+          <h2>Phím tắt hữu ích</h2>
+          <ul>
+            <li><code>Alt + F4</code>: tắt trình duyệt nhanh.</li>
+            <li><code>Ctrl + W</code>: đóng hộp tab.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Mẹo thao tác</h2>
+          <ul>
+            <li>Di chuột trên thẻ để xem mô tả nhanh; bấm để mở.</li>
+            <li>Phân trang lưới chức năng dùng các nút <strong>‹</strong>/<strong>›</strong> dưới cùng.</li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="footer">
+        <a class="btn" href="home_admin.html">← Về Trang chủ</a>
+        <span class="muted">Docs • UI demo</span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Theme
+    const theme = localStorage.getItem('bm_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+
+    // Back button
+    const backBtn = document.getElementById('Back');
+    backBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>`;
+    backBtn.addEventListener('click', ()=>{ window.location.href = 'home_admin.html'; });
+
+    // Slide + Stagger
+    const pageRoot = document.getElementById('pageRoot');
+    const staggerWrap = document.getElementById('stagger');
+    pageRoot.style.setProperty('--dx','24px'); // đổi thành '-24px' nếu muốn trượt từ trái
+    requestAnimationFrame(()=>{
+      pageRoot.classList.add('anim');
+      const kids = Array.from(staggerWrap.children);
+      kids.forEach((el,i)=>{
+        el.style.animationDelay = `${120 + i*80}ms`;
+        el.classList.add('in');
+      });
+    });
+  </script>
+</body>
+</html>
