@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlueMoon — Liên hệ Ban quản lý</title>
+  <style>
+    :root{
+      --bg-grad-start:#3b82f6; --bg-grad-end:#1e3a8a;
+      --text:#0b1226; --muted:#56607a; --card:#ffffff; --stroke:#e6eaf5;
+      --toolbar-h:64px; --radius:18px;
+      --shadow:0 18px 45px rgba(13,35,69,.18);
+      --shadow-2:0 10px 28px rgba(13,35,69,.16);
+    }
+    [data-theme="dark"]{
+      --bg-grad-start:#0f172a; --bg-grad-end:#0b1220;
+      --text:#e5e7eb; --muted:#a3adc2; --card:#0b1226; --stroke:#1f2a44;
+      --shadow:0 18px 45px rgba(0,0,0,.45); --shadow-2:0 10px 28px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+      overflow-x:hidden;
+    }
+
+    /* Toolbar */
+    .toolbar{
+      position:fixed; inset:0 0 auto 0; height:var(--toolbar-h);
+      display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+      padding:0 16px; z-index:20; color:#fff;
+      background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.08));
+      backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,.18);
+    }
+    .icon-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:999px; cursor:pointer;
+      background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+
+    /* Main */
+    .main{min-height:100%; padding-top:calc(var(--toolbar-h) + 28px); padding-bottom:40px;}
+    .container{width:min(980px,92vw); margin:0 auto;}
+    .title{margin:8px 0 18px; font-size:34px; font-weight:900; letter-spacing:.2px; color:#fff;}
+
+    .card{
+      background:var(--card); border:1px solid var(--stroke); border-radius:16px; box-shadow:var(--shadow-2);
+      padding:20px; margin-bottom:16px;
+    }
+    h2{margin:0 0 12px; font-size:20px; color:var(--text)}
+    h3{margin:0 0 8px; font-size:16px; color:var(--text)}
+    p{margin:6px 0; color:var(--muted)}
+    .grid{display:grid; gap:16px}
+    @media (min-width: 720px){ .grid{grid-template-columns: 1fr 1fr;} }
+
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:12px; border:1px solid var(--stroke);
+      background:var(--card); cursor:pointer; box-shadow:var(--shadow-2); text-decoration:none; color:inherit;
+      font-weight:600; transition:transform .1s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:#2563eb; color:#fff; border-color:#2563eb}
+    .btn.success{background:#16a34a; color:#fff; border-color:#16a34a}
+
+    /* Contact cards */
+    .contact-card{
+      border:1px solid var(--stroke); border-radius:12px; padding:20px; background:var(--card);
+      margin-bottom:16px; transition:box-shadow .2s ease;
+    }
+    .contact-card:hover{box-shadow:var(--shadow-2)}
+
+    .contact-header{
+      display:flex; align-items:center; gap:12px; margin-bottom:12px;
+    }
+    .contact-avatar{
+      width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#1e40af);
+      display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:18px;
+    }
+    .contact-info h3{margin:0; color:var(--text)}
+    .contact-info p{margin:0; color:var(--muted); font-size:14px}
+
+    .contact-details{margin:12px 0}
+    .contact-item{
+      display:flex; align-items:center; gap:8px; margin:8px 0; color:var(--text);
+    }
+    .contact-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+
+    .working-hours{
+      background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.2); border-radius:8px; padding:12px; margin:12px 0;
+    }
+    .working-hours h4{margin:0 0 8px; color:var(--text); font-size:14px}
+    .working-hours p{margin:0; color:var(--text); font-size:13px}
+
+    .office-status{
+      display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:600;
+      margin-bottom:12px;
+    }
+    .status-open{background:#dcfce7; color:#166534}
+    .status-closed{background:#fef2f2; color:#dc2626}
+    [data-theme="dark"] .status-open{background:#052e16; color:#4ade80}
+    [data-theme="dark"] .status-closed{background:#450a0a; color:#f87171}
+
+    .emergency-card{
+      background:linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; border:none;
+    }
+    .emergency-card h3, .emergency-card p{color:#fff}
+    .emergency-card .btn{background:rgba(255,255,255,.2); color:#fff; border-color:rgba(255,255,255,.3)}
+
+    .quick-contact{
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin:16px 0;
+    }
+    .quick-btn{
+      display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px; border-radius:12px;
+      border:1px solid var(--stroke); background:var(--card); cursor:pointer; text-align:center;
+      transition:all .2s ease; text-decoration:none; color:inherit;
+    }
+    .quick-btn:hover{transform:translateY(-2px); box-shadow:var(--shadow-2)}
+    .quick-btn .icon{width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px}
+    .quick-btn .label{font-size:12px; font-weight:600; color:var(--text)}
+
+    @media (max-width: 768px) {
+      .contact-actions{flex-direction:column}
+      .quick-contact{grid-template-columns:repeat(2,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <!-- Toolbar -->
+  <header class="toolbar" role="banner">
+    <button class="icon-btn" id="btnBack">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <div></div>
+    <button class="icon-btn" id="btnNotifications">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 22a2.5 2.5 0 0 0 2.4-2H9.6A2.5 2.5 0 0 0 12 22Z" fill="white" opacity=".9"/>
+        <path d="M19 17H5l1.2-1.8A2 2 0 0 0 7 14v-3a5 5 0 1 1 10 0v3c0 .4.1.8.3 1.2L19 17Z" stroke="white" stroke-width="1.8" fill="none" opacity=".9"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Content -->
+  <main class="main">
+    <div class="container">
+      <h1 class="title">Liên hệ Ban quản lý</h1>
+
+      <!-- Office Status -->
+      <section class="card">
+        <div class="office-status status-open">
+          <div style="width:8px;height:8px;border-radius:50%;background:currentColor"></div>
+          Văn phòng đang mở cửa
+        </div>
+        <h2>🏢 Văn phòng Ban quản lý</h2>
+        <div class="working-hours">
+          <h4>⏰ Giờ làm việc</h4>
+          <p><strong>Thứ 2 - Thứ 6:</strong> 8:00 - 17:00</p>
+          <p><strong>Thứ 7:</strong> 8:00 - 12:00</p>
+          <p><strong>Chủ nhật:</strong> Nghỉ (trừ trường hợp khẩn cấp)</p>
+        </div>
+        <div class="contact-item">
+          <span>📍</span>
+          <span>Tầng 1, Tòa nhà BlueMoon, 123 Đại Cồ Việt, Hai Bà Trưng, Hà Nội</span>
+        </div>
+      </section>
+
+      <!-- Quick Contact -->
+      <section class="card">
+        <h2>📞 Liên hệ nhanh</h2>
+        <div class="quick-contact">
+          <a href="tel:0241234567" class="quick-btn">
+            <div class="icon" style="background:#10b981;color:#fff">📞</div>
+            <div class="label">Gọi điện</div>
+          </a>
+          <a href="mailto:info@bluemoon.vn" class="quick-btn">
+            <div class="icon" style="background:#3b82f6;color:#fff">✉️</div>
+            <div class="label">Email</div>
+          </a>
+          <button class="quick-btn" onclick="openZalo()">
+            <div class="icon" style="background:#0068ff;color:#fff">💬</div>
+            <div class="label">Zalo</div>
+          </button>
+          <button class="quick-btn" onclick="openChat()">
+            <div class="icon" style="background:#8b5cf6;color:#fff">💭</div>
+            <div class="label">Chat online</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Emergency Contact -->
+      <section class="card emergency-card">
+        <h2>🚨 Liên hệ khẩn cấp (24/7)</h2>
+        <p>Sử dụng trong các trường hợp: cháy nổ, sự cố điện nước, tai nạn, mất an ninh</p>
+        <div class="contact-actions">
+          <a href="tel:113" class="btn">🚒 Cứu hỏa: 113</a>
+          <a href="tel:0902123456" class="btn">📱 Bảo vệ: 090.212.3456</a>
+          <a href="tel:0903345678" class="btn">🔧 Kỹ thuật: 090.334.5678</a>
+        </div>
+      </section>
+
+      <!-- Staff Directory -->
+      <div class="grid">
+        <section class="card">
+          <h2>👥 Ban quản lý</h2>
+          
+          <div class="contact-card">
+            <div class="contact-header">
+              <div class="contact-avatar">NV</div>
+              <div class="contact-info">
+                <h3>Nguyễn Văn A</h3>
+                <p>Trưởng ban quản lý</p>
+              </div>
+            </div>
+            <div class="contact-details">
+              <div class="contact-item">
+                <span>📱</span>
+                <span>090.123.4567</span>
+              </div>
+              <div class="contact-item">
+                <span>✉️</span>
+                <span>truongban@bluemoon.vn</span>
+              </div>
+              <div class="contact-item">
+                <span>🏢</span>
+                <span>Phòng 101, tầng 1</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <a href="tel:0901234567" class="btn primary">📞 Gọi</a>
+              <a href="mailto:truongban@bluemoon.vn" class="btn">✉️ Email</a>
+            </div>
+          </div>
+
+          <div class="contact-card">
+            <div class="contact-header">
+              <div class="contact-avatar">TH</div>
+              <div class="contact-info">
+                <h3>Trần Thị Hương</h3>
+                <p>Phó ban - Tài chính</p>
+              </div>
+            </div>
+            <div class="contact-details">
+              <div class="contact-item">
+                <span>📱</span>
+                <span>090.234.5678</span>
+              </div>
+              <div class="contact-item">
+                <span>✉️</span>
+                <span>taichinh@bluemoon.vn</span>
+              </div>
+              <div class="contact-item">
+                <span>🏢</span>
+                <span>Phòng 102, tầng 1</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <a href="tel:0902345678" class="btn primary">📞 Gọi</a>
+              <a href="mailto:taichinh@bluemoon.vn" class="btn">✉️ Email</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>🔧 Bộ phận kỹ thuật</h2>
+          
+          <div class="contact-card">
+            <div class="contact-header">
+              <div class="contact-avatar">LD</div>
+              <div class="contact-info">
+                <h3>Lê Văn Đức</h3>
+                <p>Trưởng bộ phận kỹ thuật</p>
+              </div>
+            </div>
+            <div class="contact-details">
+              <div class="contact-item">
+                <span>📱</span>
+                <span>090.345.6789</span>
+              </div>
+              <div class="contact-item">
+                <span>✉️</span>
+                <span>kythuat@bluemoon.vn</span>
+              </div>
+              <div class="contact-item">
+                <span>🏢</span>
+                <span>Phòng kỹ thuật, tầng B1</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <a href="tel:0903456789" class="btn primary">📞 Gọi</a>
+              <a href="mailto:kythuat@bluemoon.vn" class="btn">✉️ Email</a>
+            </div>
+          </div>
+
+          <div class="contact-card">
+            <div class="contact-header">
+              <div class="contact-avatar">PB</div>
+              <div class="contact-info">
+                <h3>Phạm Văn Bình</h3>
+                <p>Kỹ thuật viên điện nước</p>
+              </div>
+            </div>
+            <div class="contact-details">
+              <div class="contact-item">
+                <span>📱</span>
+                <span>090.456.7890</span>
+              </div>
+              <div class="contact-item">
+                <span>✉️</span>
+                <span>diennuoc@bluemoon.vn</span>
+              </div>
+              <div class="contact-item">
+                <span>🏢</span>
+                <span>Phòng kỹ thuật, tầng B1</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <a href="tel:0904567890" class="btn primary">📞 Gọi</a>
+              <a href="mailto:diennuoc@bluemoon.vn" class="btn">✉️ Email</a>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Customer Service -->
+      <section class="card">
+        <h2>🎧 Dịch vụ khách hàng</h2>
+        <div class="grid">
+          <div>
+            <h3>📞 Tổng đài chăm sóc khách hàng</h3>
+            <div class="contact-item">
+              <span>📱</span>
+              <span><strong>1900.1234</strong> (miễn phí)</span>
+            </div>
+            <div class="contact-item">
+              <span>⏰</span>
+              <span>24/7 - Tất cả các ngày trong tuần</span>
+            </div>
+            <p style="margin-top:12px">Hỗ trợ tất cả vấn đề: thanh toán, bảo trì, khiếu nại, tư vấn</p>
+          </div>
+          <div>
+            <h3>💻 Hỗ trợ trực tuyến</h3>
+            <div class="contact-item">
+              <span>🌐</span>
+              <span>www.bluemoon.vn/support</span>
+            </div>
+            <div class="contact-item">
+              <span>💬</span>
+              <span>Chat trực tiếp 8:00 - 22:00</span>
+            </div>
+            <p style="margin-top:12px">Tra cứu hóa đơn, nộp phí, đặt lịch bảo trì online</p>
+          </div>
+        </div>
+      </section>
+
+      <div style="margin-top:20px; text-align:center">
+        <a href="home_resident.html" class="btn">← Về trang chủ</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Đồng bộ theme
+    const theme = localStorage.getItem('bm_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Navigation
+    document.getElementById('btnBack').addEventListener('click', () => {
+      window.location.href = 'home_resident.html';
+    });
+
+    document.getElementById('btnNotifications').addEventListener('click', () => {
+      alert('Thông báo: Văn phòng ban quản lý đang mở cửa');
+    });
+
+    // Quick contact functions
+    function openZalo() {
+      alert('🟢 Mở Zalo...\nTìm kiếm: BlueMoon Apartment\nID: @bluemoon.vn');
+    }
+
+    function openChat() {
+      alert('💬 Kết nối chat online...\nĐang chuyển đến trang hỗ trợ trực tuyến');
+    }
+
+    // Update office status based on current time
+    function updateOfficeStatus() {
+      const now = new Date();
+      const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const hour = now.getHours();
+      
+      const statusElement = document.querySelector('.office-status');
+      
+      if (day === 0) { // Sunday
+        statusElement.className = 'office-status status-closed';
+        statusElement.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:currentColor"></div>Văn phòng đóng cửa (Chủ nhật)';
+      } else if (day === 6) { // Saturday
+        if (hour >= 8 && hour < 12) {
+          statusElement.className = 'office-status status-open';
+          statusElement.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:currentColor"></div>Văn phòng đang mở cửa';
+        } else {
+          statusElement.className = 'office-status status-closed';
+          statusElement.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:currentColor"></div>Văn phòng đóng cửa';
+        }
+      } else { // Monday to Friday
+        if (hour >= 8 && hour < 17) {
+          statusElement.className = 'office-status status-open';
+          statusElement.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:currentColor"></div>Văn phòng đang mở cửa';
+        } else {
+          statusElement.className = 'office-status status-closed';
+          statusElement.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:currentColor"></div>Văn phòng đóng cửa';
+        }
+      }
+    }
+
+    // Update status on page load
+    updateOfficeStatus();
+
+    // Contact card hover effects
+    document.querySelectorAll('.contact-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't trigger if clicking on buttons
+        if (!e.target.closest('.btn') && !e.target.closest('a[href^="tel"]') && !e.target.closest('a[href^="mailto"]')) {
+          const name = card.querySelector('h3').textContent;
+          alert(`💼 ${name}\nXem thông tin chi tiết (demo)`);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

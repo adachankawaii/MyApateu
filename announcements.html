@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlueMoon — Thông báo chung cư</title>
+  <style>
+    :root{
+      --bg-grad-start:#3b82f6; --bg-grad-end:#1e3a8a;
+      --text:#0b1226; --muted:#56607a; --card:#ffffff; --stroke:#e6eaf5;
+      --toolbar-h:64px; --radius:18px;
+      --shadow:0 18px 45px rgba(13,35,69,.18);
+      --shadow-2:0 10px 28px rgba(13,35,69,.16);
+    }
+    [data-theme="dark"]{
+      --bg-grad-start:#0f172a; --bg-grad-end:#0b1220;
+      --text:#e5e7eb; --muted:#a3adc2; --card:#0b1226; --stroke:#1f2a44;
+      --shadow:0 18px 45px rgba(0,0,0,.45); --shadow-2:0 10px 28px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+      overflow-x:hidden;
+    }
+
+    /* Toolbar */
+    .toolbar{
+      position:fixed; inset:0 0 auto 0; height:var(--toolbar-h);
+      display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+      padding:0 16px; z-index:20; color:#fff;
+      background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.08));
+      backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,.18);
+    }
+    .icon-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:999px; cursor:pointer;
+      background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+
+    /* Main */
+    .main{min-height:100%; padding-top:calc(var(--toolbar-h) + 28px); padding-bottom:40px;}
+    .container{width:min(980px,92vw); margin:0 auto;}
+    .title{margin:8px 0 18px; font-size:34px; font-weight:900; letter-spacing:.2px; color:#fff;}
+
+    .card{
+      background:var(--card); border:1px solid var(--stroke); border-radius:16px; box-shadow:var(--shadow-2);
+      padding:20px; margin-bottom:16px;
+    }
+    h2{margin:0 0 12px; font-size:20px; color:var(--text)}
+    p{margin:6px 0; color:var(--muted)}
+
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:12px; border:1px solid var(--stroke);
+      background:var(--card); cursor:pointer; box-shadow:var(--shadow-2); text-decoration:none; color:inherit;
+      font-weight:600; transition:transform .1s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+
+    /* Announcement items */
+    .announcement-item{
+      border:1px solid var(--stroke); border-radius:12px; padding:18px; background:var(--card);
+      margin-bottom:16px; transition:box-shadow .2s ease; cursor:pointer;
+    }
+    .announcement-item:hover{box-shadow:var(--shadow-2)}
+    .announcement-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px}
+    .announcement-title{font-weight:700; font-size:18px; color:var(--text); margin:0}
+    .announcement-date{font-size:12px; color:var(--muted); white-space:nowrap; margin-left:12px}
+    .announcement-content{color:var(--text); line-height:1.5; margin-bottom:12px}
+    .announcement-meta{display:flex; align-items:center; gap:12px; font-size:12px; color:var(--muted)}
+
+    .badge{
+      display:inline-block; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:600;
+    }
+    .badge-important{background:#fee2e2; color:#991b1b}
+    .badge-info{background:#dbeafe; color:#1e40af}
+    .badge-notice{background:#f3f4f6; color:#374151}
+    [data-theme="dark"] .badge-important{background:#7f1d1d; color:#fca5a5}
+    [data-theme="dark"] .badge-info{background:#1e3a8a; color:#bfdbfe}
+    [data-theme="dark"] .badge-notice{background:#374151; color:#f3f4f6}
+
+    .tabs{
+      display:flex; gap:4px; margin-bottom:20px; background:var(--stroke); border-radius:12px; padding:4px;
+    }
+    .tab{
+      flex:1; padding:8px 16px; border-radius:8px; text-align:center; cursor:pointer;
+      font-weight:600; transition:all .2s ease; border:none; background:transparent; color:var(--muted);
+    }
+    .tab.active{background:var(--card); color:var(--text); box-shadow:var(--shadow-2)}
+
+    .pinned{
+      border-left:4px solid #3b82f6; background:linear-gradient(90deg, rgba(59,130,246,0.03), transparent);
+    }
+    [data-theme="dark"] .pinned{background:linear-gradient(90deg, rgba(59,130,246,0.1), transparent)}
+  </style>
+</head>
+<body>
+  <!-- Toolbar -->
+  <header class="toolbar" role="banner">
+    <button class="icon-btn" id="btnBack">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <div></div>
+    <button class="icon-btn" id="btnNotifications">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 22a2.5 2.5 0 0 0 2.4-2H9.6A2.5 2.5 0 0 0 12 22Z" fill="white" opacity=".9"/>
+        <path d="M19 17H5l1.2-1.8A2 2 0 0 0 7 14v-3a5 5 0 1 1 10 0v3c0 .4.1.8.3 1.2L19 17Z" stroke="white" stroke-width="1.8" fill="none" opacity=".9"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Content -->
+  <main class="main">
+    <div class="container">
+      <h1 class="title">Thông báo chung cư</h1>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="all">Tất cả</button>
+        <button class="tab" data-tab="important">Quan trọng</button>
+        <button class="tab" data-tab="info">Tin tức</button>
+        <button class="tab" data-tab="maintenance">Bảo trì</button>
+      </div>
+
+      <!-- Thông báo ghim -->
+      <section class="card">
+        <h2>📌 Thông báo quan trọng</h2>
+        
+        <div class="announcement-item pinned">
+          <div class="announcement-header">
+            <h3 class="announcement-title">🚨 Thông báo cắt điện định kỳ tháng 10</h3>
+            <div class="announcement-date">05/10/2025</div>
+          </div>
+          <div class="announcement-content">
+            Ban quản lý thông báo lịch cắt điện định kỳ để bảo trì hệ thống điện tòa nhà:<br>
+            <strong>Thời gian:</strong> Chủ nhật, 13/10/2025 từ 8:00 - 12:00<br>
+            <strong>Phạm vi:</strong> Toàn bộ tòa nhà BlueMoon<br>
+            <strong>Lưu ý:</strong> Vui lòng chuẩn bị máy phát điện dự phòng cho thang máy trong trường hợp khẩn cấp.
+          </div>
+          <div class="announcement-meta">
+            <span class="badge badge-important">Quan trọng</span>
+            <span>👁️ 234 lượt xem</span>
+            <span>Ban quản lý</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thông báo mới nhất -->
+      <section class="card">
+        <h2>🔔 Thông báo mới nhất</h2>
+        
+        <div class="announcement-item">
+          <div class="announcement-header">
+            <h3 class="announcement-title">🎉 Sự kiện Tết Trung Thu 2025</h3>
+            <div class="announcement-date">03/10/2025</div>
+          </div>
+          <div class="announcement-content">
+            Chung cư BlueMoon tổ chức chương trình "Đêm Trăng Rằm Ấm Áp" dành cho các gia đình có trẻ em:<br>
+            📅 <strong>Thời gian:</strong> Thứ 7, 12/10/2025 từ 19:00 - 21:00<br>
+            📍 <strong>Địa điểm:</strong> Sân vườn tầng trệt<br>
+            🎁 <strong>Hoạt động:</strong> Múa lân, phá cỗ, tặng quà cho trẻ em
+          </div>
+          <div class="announcement-meta">
+            <span class="badge badge-info">Sự kiện</span>
+            <span>👁️ 156 lượt xem</span>
+            <span>Ban tổ chức</span>
+          </div>
+        </div>
+
+        <div class="announcement-item">
+          <div class="announcement-header">
+            <h3 class="announcement-title">🚗 Quy định mới về bãi đậu xe</h3>
+            <div class="announcement-date">01/10/2025</div>
+          </div>
+          <div class="announcement-content">
+            Từ ngày 15/10/2025, chung cư áp dụng quy định mới về việc đậu xe:<br>
+            • Thẻ xe phải được đăng ký trước 7 ngày<br>
+            • Phí gửi xe tăng từ 200.000₫ lên 250.000₫/tháng<br>
+            • Xe khách chỉ được đậu tối đa 2 tiếng<br>
+            • Xe vi phạm sẽ bị khóa bánh và phạt 100.000₫
+          </div>
+          <div class="announcement-meta">
+            <span class="badge badge-notice">Quy định</span>
+            <span>👁️ 289 lượt xem</span>
+            <span>Ban quản lý</span>
+          </div>
+        </div>
+
+        <div class="announcement-item">
+          <div class="announcement-header">
+            <h3 class="announcement-title">🔧 Lịch bảo trì thang máy tháng 10</h3>
+            <div class="announcement-date">28/09/2025</div>
+          </div>
+          <div class="announcement-content">
+            Lịch bảo trì định kỳ thang máy trong tháng 10/2025:<br>
+            <strong>Thang máy A:</strong> 08/10 (9:00-12:00)<br>
+            <strong>Thang máy B:</strong> 15/10 (9:00-12:00)<br>
+            <strong>Thang máy C:</strong> 22/10 (9:00-12:00)<br>
+            Trong thời gian bảo trì, vui lòng sử dụng thang máy khác hoặc cầu thang bộ.
+          </div>
+          <div class="announcement-meta">
+            <span class="badge badge-info">Bảo trì</span>
+            <span>👁️ 178 lượt xem</span>
+            <span>Bộ phận kỹ thuật</span>
+          </div>
+        </div>
+
+        <div class="announcement-item">
+          <div class="announcement-header">
+            <h3 class="announcement-title">💰 Thông báo tăng phí quản lý từ tháng 11</h3>
+            <div class="announcement-date">25/09/2025</div>
+          </div>
+          <div class="announcement-content">
+            Do chi phí vận hành tăng, từ tháng 11/2025 phí quản lý sẽ điều chỉnh như sau:<br>
+            • Căn 1 phòng ngủ: 400.000₫ → 450.000₫<br>
+            • Căn 2 phòng ngủ: 500.000₫ → 550.000₫<br>
+            • Căn 3+ phòng ngủ: 600.000₫ → 650.000₫<br>
+            Chi tiết được gửi kèm hóa đơn tháng 10.
+          </div>
+          <div class="announcement-meta">
+            <span class="badge badge-important">Quan trọng</span>
+            <span>👁️ 445 lượt xem</span>
+            <span>Ban quản lý</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Liên hệ -->
+      <section class="card">
+        <h2>📞 Cần hỗ trợ thông tin?</h2>
+        <p>Liên hệ với Ban quản lý để được giải đáp thắc mắc:</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px">
+          <button class="btn">📞 Hotline: 1900-XXX-XXX</button>
+          <button class="btn">📧 Email: info@bluemoon.vn</button>
+          <button class="btn">🏢 Văn phòng tầng 1</button>
+        </div>
+      </section>
+
+      <div style="margin-top:20px; text-align:center">
+        <a href="home_resident.html" class="btn">← Về trang chủ</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Đồng bộ theme
+    const theme = localStorage.getItem('bm_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Navigation
+    document.getElementById('btnBack').addEventListener('click', () => {
+      window.location.href = 'home_resident.html';
+    });
+
+    document.getElementById('btnNotifications').addEventListener('click', () => {
+      alert('3 thông báo mới chưa đọc');
+    });
+
+    // Tab functionality
+    const tabs = document.querySelectorAll('.tab');
+    const announcements = document.querySelectorAll('.announcement-item');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Filter announcements (demo - in real app would filter content)
+        const filter = tab.getAttribute('data-tab');
+        console.log('Filtering by:', filter);
+        
+        // Demo: just show all for now
+        announcements.forEach(item => {
+          item.style.display = 'block';
+        });
+      });
+    });
+
+    // Click to expand announcements
+    announcements.forEach(item => {
+      item.addEventListener('click', () => {
+        alert('Xem chi tiết thông báo (chức năng demo)');
+      });
+    });
+  </script>
+</body>
+</html>
