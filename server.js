@@ -470,6 +470,7 @@ app.delete('/api/rooms/:id', async (req, res) => {
       return res.status(404).json({ ok:false, message:'Room not found' });
     }
 
+
     const userId = room.user_id ?? null;
 
     // Nếu có tài khoản gắn phòng → tách liên kết & tách person_id trước khi xoá để tránh FK
