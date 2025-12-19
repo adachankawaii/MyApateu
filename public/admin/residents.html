@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlueMoon — Cư dân & Căn hộ</title>
+  <style>
+    :root{
+      --bg-grad-start:#3b82f6; --bg-grad-end:#1e3a8a;
+      --text:#0b1226; --muted:#56607a; --card:#ffffff; --stroke:#e6eaf5;
+      --radius:16px; --shadow:0 18px 45px rgba(13,35,69,.18); --shadow-2:0 10px 28px rgba(13,35,69,.16);
+    }
+    [data-theme="dark"]{
+      --bg-grad-start:#0f172a; --bg-grad-end:#0b1220;
+      --text:#e5e7eb; --muted:#a3adc2; --card:#0b1226; --stroke:#1f2a44;
+      --shadow:0 18px 45px rgba(0,0,0,.45); --shadow-2:0 10px 28px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{color:var(--text);background:radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);}
+
+    /* Hero slideshow */
+    .hero{position:relative;height:220px;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.25);
+      background:linear-gradient(120deg, rgba(255,255,255,.12), rgba(255,255,255,.04));backdrop-filter: blur(4px);}
+    .slides{position:absolute; inset:0; display:grid}
+    .slide{grid-area:1/1;background-size:cover;background-position:center;opacity:0;transform:scale(1.04);animation:fadeZoom 18s infinite;}
+    .slide:nth-child(1){animation-delay:0s}.slide:nth-child(2){animation-delay:6s}.slide:nth-child(3){animation-delay:12s}
+    @keyframes fadeZoom{0%{opacity:0;transform:scale(1.04)}6%{opacity:1;transform:scale(1)}28%{opacity:1}33%{opacity:0}100%{opacity:0}}
+    .overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,6,23,.55), rgba(2,6,23,.35) 60%, transparent)}
+    .toolbar{position:absolute;left:0;right:0;top:0;height:64px;z-index:3;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:0 14px;color:#fff}
+    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;background:rgba(255,255,255);border:1px solid rgba(255,255,255,.18);cursor:pointer}
+    .hero h1{z-index:3;position:absolute;left:20px;bottom:18px;margin:0;color:#fff;font-size:24px;font-weight:900;letter-spacing:.3px;text-shadow:0 6px 22px rgba(0,0,0,.35)}
+
+    /* Layout */
+    .wrap{width:min(1180px,92vw); margin:18px auto 40px; display:grid; grid-template-columns: 360px 1fr; gap:18px}
+    @media (max-width: 980px){ .wrap{grid-template-columns:1fr} }
+    .panel{background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); box-shadow:var(--shadow-2); overflow:hidden}
+
+    .left .head{display:flex; flex-direction:column; gap:10px; padding:12px; border-bottom:1px solid var(--stroke); background:linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,.35))}
+    [data-theme="dark"] .left .head{background:linear-gradient(180deg, rgba(17,24,39,.65), rgba(17,24,39,.35))}
+    .search-row{display:flex; gap:8px; align-items:center;}
+    .search{flex:1; display:flex; align-items:center; gap:8px; height:38px; padding:0 10px; border-radius:999px; background:#ffffff; border:1px solid var(--stroke)}
+    [data-theme="dark"] .search{background:#0b1226}
+    .search input{flex:1;border:0;outline:0;background:transparent;color:var(--text)}
+    .flt{display:grid; grid-template-columns: 1fr 1fr; gap:8px}
+    .flt select{height:38px;border-radius:10px;border:1px solid var(--stroke);background:var(--card);color:var(--text);padding:0 10px}
+
+    /* List toolbar */
+    .list-toolbar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:8px 12px 6px;
+      border-top:1px solid var(--stroke);
+      background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.7));
+    }
+    [data-theme="dark"] .list-toolbar{
+      background:linear-gradient(180deg,rgba(17,24,39,.9),rgba(17,24,39,.75));
+    }
+    .list-toolbar .count{font-size:12px;color:var(--muted);}
+    .primary-chip{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:7px 11px;border-radius:999px;border:none;
+      background:#2563eb;color:#fff;font-size:13px;font-weight:600;cursor:pointer;
+      box-shadow:0 8px 18px rgba(37,99,235,.35);
+    }
+    .primary-chip span{font-size:16px;line-height:1;}
+
+    .list{max-height:calc(100dvh - 360px); overflow:auto; padding:8px}
+    .room{border:1px solid var(--stroke); border-radius:14px; padding:10px; margin:8px 4px; display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; cursor:pointer; background:color-mix(in oklab, var(--card) 96%, transparent); transition:transform .08s ease, box-shadow .12s ease;}
+    .room:hover{box-shadow:var(--shadow-2); transform:translateY(-1px);}
+    .room .badge{font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--stroke); color:var(--muted)}
+    .room .name{font-weight:900; letter-spacing:.2px}
+    .room .sub{font-size:12px; color:var(--muted)}
+    .active{outline:2px solid #2563eb}
+
+    .right .body{padding:14px}
+    .kv{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 720px){ .kv{grid-template-columns:1fr} }
+    .card{border:1px solid var(--stroke); border-radius:14px; padding:12px; background:var(--card)}
+    .card h4{margin:0 0 8px; font-size:14px}
+    table{width:100%; border-collapse:collapse}
+    th, td{border-bottom:1px solid var(--stroke); text-align:left; padding:8px}
+    th{font-size:12px; color:var(--muted); letter-spacing:.2px}
+    .empty{padding:28px; text-align:center; color:var(--muted)}
+
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 11px;
+      border-radius:10px;border:1px solid var(--stroke);background:var(--card);cursor:pointer;
+      font-size:13px;
+    }
+
+    /* Modal */
+    #modalCard{
+      width: min(1000px, 96vw) !important;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #modalForm{
+      padding: 12px !important;
+      overflow: auto;
+      max-height: calc(92vh - 120px);
+    }
+
+    .modal-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 1100px){ .modal-grid{ grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 680px){ .modal-grid{ grid-template-columns: 1fr; } }
+
+    .cardx{
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow-2);
+      overflow:hidden;
+    }
+    .cardx .cardx-head{
+      padding:8px 12px;
+      border-bottom:1px solid var(--stroke);
+      background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.25));
+      font-weight:900; font-size:14px;
+    }
+    [data-theme="dark"] .cardx .cardx-head{
+      background:linear-gradient(180deg, rgba(17,24,39,.55), rgba(17,24,39,.25));
+    }
+    .cardx .cardx-body{
+      padding:10px 12px;
+      display:grid; gap:8px;
+    }
+
+    .field label{font-size:12px; color:var(--muted); display:block; margin-bottom:4px}
+    .field input,.field select{
+      width:100%;
+      height: 34px;
+      padding:0 10px;
+      border:1px solid var(--stroke);
+      border-radius:8px;
+      background:var(--card); color:var(--text); outline:none;
+    }
+
+    .actions-row{
+      position: sticky;
+      bottom: 0;
+      padding-top: 10px;
+      display:flex; gap:8px; justify-content:flex-end;
+      background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--card) 92%, transparent));
+      border-top: 1px solid var(--stroke);
+    }
+    .actions-row .btn{
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Modal overlay -->
+  <div id="modalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50">
+    <div id="modalCard" style="width:min(560px,94vw);background:var(--card);color:var(--text);border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow);overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--stroke)">
+        <h3 id="modalTitle" style="margin:0;font-size:16px;font-weight:900">Form</h3>
+        <button id="modalClose" class="btn">✕</button>
+      </div>
+      <form id="modalForm" style="padding:14px;display:grid;gap:10px"></form>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="slides">
+      <div class="slide" style="background-image:radial-gradient(1200px 700px at 70% 20%, rgba(37,99,235,.35), transparent), url('https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1500&auto=format&fit=crop');"></div>
+      <div class="slide" style="background-image:radial-gradient(1200px 700px at 70% 20%, rgba(37,99,235,.35), transparent), url('https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1500&auto=format&fit=crop');"></div>
+      <div class="slide" style="background-image:radial-gradient(1200px 700px at 70% 20%, rgba(37,99,235,.35), transparent), url('https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=1500&auto=format&fit=crop');"></div>
+    </div>
+    <div class="overlay"></div>
+    <div class="toolbar">
+      <button class="icon-btn" id="Back" title="Quay lại">⟵</button>
+      <span></span>
+      <button class="icon-btn" id="Theme" title="Đổi giao diện">☼</button>
+    </div>
+    <h1>Cư dân & Căn hộ</h1>
+  </section>
+
+  <main class="wrap">
+    <section class="panel left" aria-label="Danh sách phòng">
+      <div class="head">
+        <div class="search-row">
+          <label class="search" style="flex:1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#64748b" stroke-width="1.6"/><path d="M20 20l-3.2-3.2" stroke="#64748b" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input id="q" placeholder="Tìm số phòng hoặc chủ hộ..." />
+          </label>
+        </div>
+        <div class="flt">
+          <select id="fltStatus">
+            <option value="">Tất cả trạng thái</option>
+            <option value="ACTIVE">ACTIVE</option>
+          </select>
+          <select id="fltType">
+            <option value="">Tất cả loại phòng</option>
+            <option value="APARTMENT">APARTMENT</option>
+            <option value="OFFICE">OFFICE</option>
+            <option value="SHOP">SHOP</option>
+            <option value="OTHER">OTHER</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="list-toolbar">
+        <div class="count">
+          Tổng: <span id="roomCount">0</span> phòng
+        </div>
+        <button class="primary-chip" id="btnCreateRoomList">
+          <span>＋</span> Thêm hộ mới
+        </button>
+      </div>
+
+      <div class="list" id="roomList" role="list"></div>
+    </section>
+
+    <section class="panel right" aria-label="Chi tiết phòng">
+      <div class="body" id="detail">
+        <div class="empty">Chọn một phòng để xem chi tiết.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  /* THEME + BACK */
+  (function(){
+    var theme = localStorage.getItem('bm_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+
+    var btnTheme = document.getElementById('Theme');
+    if (btnTheme) {
+      btnTheme.addEventListener('click', function(){
+        var cur  = document.documentElement.getAttribute('data-theme');
+        var next = cur === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('bm_theme', next);
+      });
+    }
+    var btnBack = document.getElementById('Back');
+    if (btnBack) {
+      btnBack.addEventListener('click', function(){
+        window.location.href = '/admin/home_admin.html';
+      });
+    }
+  })();
+
+  /* STATE */
+  var state = {
+    rooms: [],
+    currentRoomId: null,
+    cacheResidents: {},      // roomId -> person[]
+    selectedResidents: {}    // personId -> true
+  };
+
+  function fmtDate(d){
+    if(!d) return '';
+    if(typeof d === 'string'){
+      if(d.indexOf('T') !== -1) return d.split('T')[0];
+      return d.slice(0,10);
+    }
+    return String(d).slice(0,10);
+  }
+
+  /* AJAX helpers */
+  function getJSON(url){
+    return fetch(url,{credentials:'include'})
+      .then(function(r){
+        return r.json().catch(function(){return {};}).then(function(d){
+          if(!r.ok) throw new Error(d && d.message || ('HTTP '+r.status));
+          return d;
+        });
+      });
+  }
+  function sendJSON(method,url,payload){
+    return fetch(url,{
+      method:method,
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body: payload ? JSON.stringify(payload) : null
+    }).then(function(r){
+      return r.json().catch(function(){return {};}).then(function(d){
+        if(!r.ok) throw new Error(d && d.message || ('HTTP '+r.status));
+        return d;
+      });
+    });
+  }
+  function postJSON(url,payload){return sendJSON('POST',url,payload);}
+  function putJSON(url,payload){return sendJSON('PUT',url,payload);}
+  function delJSON(url){return sendJSON('DELETE',url,null);}
+
+  /* API wrappers */
+  function apiLoadRooms(params){
+    var qs = '';
+    if(params){
+      var usp = new URLSearchParams();
+      if(params.q) usp.set('q',params.q);
+      if(params.status) usp.set('status',params.status);
+      if(params.room_type) usp.set('room_type',params.room_type);
+      qs = usp.toString();
+    }
+    return getJSON('/api/rooms'+(qs?('?'+qs):''));
+  }
+
+  function apiLoadResidents(roomId){
+    if(state.cacheResidents[roomId]){
+      console.log('Using cached residents for room', roomId, state.cacheResidents[roomId]);
+      return Promise.resolve(state.cacheResidents[roomId]);
+    }
+    return getJSON('/api/persons?room_id='+encodeURIComponent(roomId))
+      .then(function(data){
+        console.log('API response for room', roomId, ':', data);
+        var rows;
+        if (Array.isArray(data)) rows = data;
+        else if (Array.isArray(data.persons)) rows = data.persons;
+        else if (Array.isArray(data.rows)) rows = data.rows;
+        else rows = [];
+        console.log('Parsed residents:', rows);
+        state.cacheResidents[roomId] = rows;
+        return rows;
+      });
+  }
+
+  /* MODAL */
+  var modalOverlay = document.getElementById('modalOverlay');
+  var modalTitle   = document.getElementById('modalTitle');
+  var modalForm    = document.getElementById('modalForm');
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', function(e){
+    if(e.target === modalOverlay) closeModal();
+  });
+
+  function openModal(title, innerHTML, onSubmit){
+    modalTitle.textContent = title;
+    modalForm.innerHTML = innerHTML;
+    modalForm.onsubmit = function(e){
+      e.preventDefault();
+      var fd = new FormData(modalForm);
+      var obj = {};
+      fd.forEach(function(v,k){ obj[k] = v; });
+      Promise.resolve(onSubmit(obj))
+        .then(function(){
+          if(modalOverlay.style.display === 'flex') closeModal();
+        })
+        .catch(function(err){
+          alert(err.message || 'Có lỗi xảy ra');
+        });
+    };
+    modalOverlay.style.display = 'flex';
+  }
+  function closeModal(){
+    modalOverlay.style.display = 'none';
+    modalForm.innerHTML = '';
+    modalForm.onsubmit = null;
+  }
+  window.closeModal = closeModal;
+
+  /* RENDER LIST ROOMS */
+  function renderRooms(){
+    var box = document.getElementById('roomList');
+    box.innerHTML = '';
+
+    var countEl = document.getElementById('roomCount');
+    if (countEl) countEl.textContent = state.rooms.length;
+
+    if(!state.rooms || !state.rooms.length){
+      box.innerHTML = '<div class="empty">Chưa có phòng nào.</div>';
+      return;
+    }
+
+    state.rooms.forEach(function(r){
+      var occupants = (r.occupants_count_calc != null ? r.occupants_count_calc : r.occupants_count) || 0;
+      var el = document.createElement('div');
+      el.className = 'room' + (state.currentRoomId === r.id ? ' active' : '');
+      el.innerHTML =
+        '<div class="badge">'+(r.status || 'N/A')+'</div>'+
+        '<div>'+
+          '<div class="name">Phòng '+(r.room_no || '')+' • '+(r.room_type || '-')+'</div>'+
+          '<div class="sub">Chủ hộ: '+(r.head_name || '-')+'</div>'+
+        '</div>'+
+        '<div class="sub">'+occupants+' người</div>';
+      el.addEventListener('click', function(){ selectRoom(r.id); });
+      box.appendChild(el);
+    });
+  }
+
+  function renderDetailEmpty(msg){
+    document.getElementById('detail').innerHTML =
+      '<div class="empty">'+(msg || 'Chọn một phòng để xem chi tiết.')+'</div>';
+  }
+
+  /* RENDER DETAIL */
+  function renderDetail(room, people){
+    // luôn đảm bảo là mảng, tránh lỗi people.map
+    if (!Array.isArray(people)){
+      if (people && Array.isArray(people.persons)) people = people.persons;
+      else if (people && Array.isArray(people.rows)) people = people.rows;
+      else people = [];
+    }
+
+    var d = document.getElementById('detail');
+    state.selectedResidents = {};
+
+    var toolbarHTML = people.length ? (
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+        '<button class="btn" id="btnBulkDelete" '+
+                'style="background:#ef4444;color:#fff;border-color:#ef4444" disabled>'+
+          '🗑 Xóa nhân khẩu đã chọn (0)'+
+        '</button>'+
+      '</div>'
+    ) : '';
+
+    var rowsHTML = people.map(function(p){
+      var isHead = (p.relation_to_head === 'Chủ hộ');
+      var cb = isHead ? '' :
+        '<input type="checkbox" data-rid="'+p.id+'" aria-label="Chọn '+(p.full_name||'')+'">';
+      return (
+        '<tr data-person-id="'+p.id+'" data-editable="'+(isHead?'0':'1')+'">'+
+          '<td>'+cb+'</td>'+
+          '<td>'+(p.full_name||'')+'</td>'+
+          '<td>'+(p.cccd||'')+'</td>'+
+          '<td>'+(p.relation_to_head||'')+'</td>'+
+          '<td>'+(p.occupation||'')+'</td>'+
+          '<td>'+fmtDate(p.dob)+'</td>'+
+          '<td>'+(p.hometown||'')+'</td>'+
+          '<td>'+(p.phone||'')+'</td>'+
+        '</tr>'
+      );
+    }).join('');
+
+    d.innerHTML =
+      '<div class="kv">'+
+        '<div class="card">'+
+          '<h4>Thông tin phòng</h4>'+
+          '<table>'+
+            '<tr><th>Số phòng</th><td>'+(room.room_no||'')+'</td></tr>'+
+            '<tr><th>Loại phòng</th><td>'+(room.room_type||'-')+'</td></tr>'+
+            '<tr><th>Trạng thái</th><td>'+(room.status||'-')+'</td></tr>'+
+            '<tr><th>Ngày bắt đầu HĐ</th><td>'+ (fmtDate(room.contract_start) || '-') +'</td></tr>'+
+            '<tr><th>Ngày kết thúc HĐ</th><td>'+ (fmtDate(room.contract_end) || '-') +'</td></tr>'+
+            '<tr><th>Chủ hộ</th><td>'+(room.head_name||'-')+'</td></tr>'+
+            '<tr><th>SĐT chủ hộ</th><td>'+(room.head_phone||'-')+'</td></tr>'+
+            '<tr><th>Số người (tính)</th><td>'+(room.occupants_count_calc!=null?room.occupants_count_calc:'-')+'</td></tr>'+
+          '</table>'+
+        '</div>'+
+        '<div class="card">'+
+          '<h4>Thao tác</h4>'+
+          '<button class="btn" id="btnEditRoom" '+
+                  'style="margin-bottom:10px;background:#2563eb;color:#fff;border-color:#2563eb">Sửa thông tin phòng</button>'+
+          '<button class="btn" id="btnAddResident" style="margin-bottom:10px">+ Thêm nhân khẩu</button>'+
+          '<button class="btn" id="btnDeleteRoom" '+
+                  'style="background:#ef4444;color:#fff;border-color:#ef4444">Xóa phòng</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h4>Danh sách cư dân</h4>'+
+        (
+          people.length ?
+          (toolbarHTML+
+            '<table id="residentsTable">'+
+              '<thead><tr>'+
+                '<th style="width:38px"></th>'+
+                '<th>Họ tên</th><th>CCCD</th><th>Quan hệ</th><th>Nghề nghiệp</th>'+
+                '<th>Ngày sinh</th><th>Quê quán</th><th>Điện thoại</th>'+
+              '</tr></thead>'+
+              '<tbody id="residentsTbody">'+rowsHTML+'</tbody>'+
+            '</table>'
+          ) :
+          '<div class="empty">Chưa có cư dân trong phòng này.</div>'
+        )+
+      '</div>';
+
+    // gắn handler
+    document.getElementById('btnAddResident')
+      .addEventListener('click', function(){ openResidentForm(room); });
+    document.getElementById('btnEditRoom')
+      .addEventListener('click', function(){ openEditRoomForm(room); });
+    document.getElementById('btnDeleteRoom')
+      .addEventListener('click', function(){ deleteRoom(room); });
+
+    // Gắn event cho nút xóa TRƯỚC
+    var btnBulk = document.getElementById('btnBulkDelete');
+    if (btnBulk){
+      btnBulk.addEventListener('click', function(){
+        var ids = Object.keys(state.selectedResidents).map(Number);
+        if(!ids.length) return;
+        if(!confirm('Xóa '+ids.length+' nhân khẩu đã chọn? (Không xóa Chủ hộ)')) return;
+
+        postJSON('/api/persons/bulk_delete',{ids:ids})
+          .then(function(){
+            state.selectedResidents = {};
+            delete state.cacheResidents[room.id];
+            return apiLoadResidents(room.id);
+          })
+          .then(function(newPeople){
+            renderDetail(room, newPeople);
+            return apiLoadRooms(currentFilter());
+          })
+          .then(function(rms){
+            state.rooms = rms;
+            renderRooms();
+          })
+          .catch(function(err){
+            alert(err.message || 'Không xóa được nhân khẩu');
+          });
+      });
+    }
+
+    // Gắn event cho tbody
+    var tbody = document.getElementById('residentsTbody');
+    console.log('Looking for tbody with id=residentsTbody:', tbody);
+    if (tbody){
+      tbody.addEventListener('change', function(e){
+        console.log('Change event triggered on:', e.target);
+        if(e.target && e.target.matches('input[type="checkbox"][data-rid]')){
+          var id = Number(e.target.getAttribute('data-rid'));
+          console.log('Checkbox changed for person ID:', id, 'checked:', e.target.checked);
+          if(e.target.checked) state.selectedResidents[id] = true;
+          else delete state.selectedResidents[id];
+
+          var ids = Object.keys(state.selectedResidents);
+          console.log('Selected residents:', state.selectedResidents, 'count:', ids.length);
+          var btn = document.getElementById('btnBulkDelete');
+          if(btn){
+            var c = ids.length;
+            btn.disabled = (c===0);
+            btn.textContent = '🗑 Xóa nhân khẩu đã chọn ('+c+')';
+            console.log('Button updated:', 'disabled='+btn.disabled, 'text='+btn.textContent);
+          } else {
+            console.error('btnBulkDelete not found!');
+          }
+        }
+      });
+
+      tbody.addEventListener('click', function(e){
+        var tr = e.target.closest('tr[data-person-id]');
+        if(!tr) return;
+        if(e.target.tagName === 'INPUT') return;
+        if(tr.getAttribute('data-editable') !== '1') return;
+        var pid = Number(tr.getAttribute('data-person-id'));
+        var person = people.find(function(p){return p.id===pid;});
+        if(person) openEditResidentForm(room, person);
+      });
+    }
+  }
+
+  /* SELECT ROOM */
+  function selectRoom(id){
+    state.currentRoomId = id;
+    renderRooms();
+
+    var room = state.rooms.find(function(r){ return r.id === id; });
+    if (!room) {
+      renderDetailEmpty();
+      return;
+    }
+
+    apiLoadResidents(id)
+      .then(function (people) {
+        renderDetail(room, people || []);
+      })
+      .catch(function (err) {
+        console.error('Lỗi load cư dân:', err);
+        // vẫn render thông tin phòng, chỉ không có cư dân
+        renderDetail(room, []);
+      });
+  }
+
+  /* FORMS */
+  function openCreateRoomBundleForm(){
+    var html =
+      '<div class="modal-grid">'+
+        '<div class="cardx">'+
+          '<div class="cardx-head">Phòng</div>'+
+          '<div class="cardx-body">'+
+            '<div class="field"><label>Số phòng*<input name="room_no" required></label></div>'+
+            '<div class="field"><label>Loại phòng'+
+              '<select name="room_type">'+
+                '<option value="APARTMENT">APARTMENT</option>'+
+                '<option value="OFFICE">OFFICE</option>'+
+                '<option value="SHOP">SHOP</option>'+
+                '<option value="OTHER">OTHER</option>'+
+              '</select></label></div>'+
+            '<div class="field"><label>Trạng thái'+
+              '<select name="status">'+
+                '<option value="ACTIVE">ACTIVE</option>'+
+              '</select></label></div>'+
+            '<div class="field"><label>HĐ bắt đầu (YYYY-MM-DD)'+
+              '<input name="contract_start"></label></div>'+
+            '<div class="field"><label>HĐ kết thúc (YYYY-MM-DD)'+
+              '<input name="contract_end"></label></div>'+
+          '</div>'+
+        '</div>'+
+
+        '<div class="cardx">'+
+          '<div class="cardx-head">Tài khoản cư dân</div>'+
+          '<div class="cardx-body">'+
+            '<div class="field"><label>Tên đăng nhập*<input name="username" required></label></div>'+
+            '<div class="field"><label>Mật khẩu*<input name="password" type="password" required></label></div>'+
+            '<div class="field"><label>Số điện thoại<input name="phone"></label></div>'+
+            '<div class="field"><label>Email<input name="email" type="email"></label></div>'+
+            '<div class="field"><label>Họ tên hiển thị*<input name="full_name" required></label></div>'+
+         ' </div>'+
+        '</div>'+
+
+        '<div class="cardx">'+
+          '<div class="cardx-head">Chủ hộ</div>'+
+          '<div class="cardx-body">'+
+            '<div class="field"><label>Họ tên chủ hộ*<input name="p_full_name" required></label></div>'+
+            '<div class="field"><label>CCCD<input name="p_cccd"></label></div>'+
+            '<div class="field"><label>Dân tộc<input name="p_ethnicity"></label></div>'+
+            '<div class="field"><label>Nghề nghiệp<input name="p_occupation"></label></div>'+
+            '<div class="field"><label>Ngày sinh (YYYY-MM-DD)<input name="p_dob"></label></div>'+
+            '<div class="field"><label>Quê quán<input name="p_hometown"></label></div>'+
+            '<div class="field"><label>Quan hệ với chủ hộ'+
+              '<select name="p_relation_to_head">'+
+                '<option value="Chủ hộ" selected>Chủ hộ</option>'+
+              '</select></label></div>'+
+            '<div class="field"><label>Điện thoại<input name="p_phone"></label></div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="actions-row">'+
+        '<button type="button" class="btn" onclick="closeModal()">Hủy</button>'+
+        '<button type="submit" class="btn" style="background:#2563eb;color:#fff;border-color:#2563eb">Tạo</button>'+
+      '</div>';
+
+    openModal('Thêm hộ mới + tài khoản', html, function(data){
+      var payload = {
+        room_no: data.room_no,
+        room_type: data.room_type || null,
+        status: data.status || null,
+        contract_start: data.contract_start || null,
+        contract_end: data.contract_end || null,
+        username: data.username,
+        password: data.password,
+        phone: data.phone || null,
+        email: data.email || null,
+        full_name: data.full_name,
+        role: 'RESIDENT',
+        person_data: {
+          full_name: data.p_full_name,
+          cccd: data.p_cccd || null,
+          ethnicity: data.p_ethnicity || null,
+          occupation: data.p_occupation || null,
+          dob: data.p_dob || null,
+          hometown: data.p_hometown || null,
+          relation_to_head: data.p_relation_to_head || 'Chủ hộ',
+          phone: data.p_phone || null
+        }
+      };
+
+      return postJSON('/api/rooms', payload)
+        .then(function(){
+          return apiLoadRooms(currentFilter());
+        })
+        .then(function(rms){
+          state.rooms = rms;
+          renderRooms();
+          if(state.rooms.length){
+            var last = state.rooms[state.rooms.length-1];
+            selectRoom(last.id);
+          }
+          alert('Tạo hộ mới thành công');
+        });
+    });
+  }
+
+  function openResidentForm(room){
+    var html =
+      '<input type="hidden" name="room_id" value="'+room.id+'">'+
+      '<label>Họ tên*<br><input name="full_name" required style="width:100%"></label>'+
+      '<label>CCCD<br><input name="cccd" style="width:100%"></label>'+
+      '<label>Dân tộc<br><input name="ethnicity" style="width:100%"></label>'+
+      '<label>Nghề nghiệp<br><input name="occupation" style="width:100%"></label>'+
+      '<label>Ngày sinh (YYYY-MM-DD)<br><input name="dob" style="width:100%"></label>'+
+      '<label>Quê quán<br><input name="hometown" style="width:100%"></label>'+
+      '<label>Quan hệ với chủ hộ<br>'+
+        '<select name="relation_to_head" style="width:100%">'+
+          '<option value="Cư dân">Cư dân</option>'+
+          '<option value="Vợ/chồng">Vợ/chồng</option>'+
+          '<option value="Con">Con</option>'+
+        '</select>'+
+      '</label>'+
+      '<label>Điện thoại<br><input name="phone" style="width:100%"></label>'+
+      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">'+
+        '<button type="button" class="btn" onclick="closeModal()">Hủy</button>'+
+        '<button type="submit" class="btn" style="background:#2563eb;color:#fff;border-color:#2563eb">Lưu</button>'+
+      '</div>';
+
+    openModal('Thêm nhân khẩu • Phòng '+room.room_no, html, function(data){
+      return postJSON('/api/persons', data)
+        .then(function(){
+          delete state.cacheResidents[room.id];
+          return apiLoadResidents(room.id);
+        })
+        .then(function(people){
+          renderDetail(room, people);
+          return apiLoadRooms(currentFilter());
+        })
+        .then(function(rms){
+          state.rooms = rms;
+          renderRooms();
+        });
+    });
+  }
+
+  function openEditResidentForm(room, person){
+    alert('Sửa nhân khẩu cần API PUT /api/persons/:id ở server. Frontend đang để placeholder.');
+  }
+
+  function openEditRoomForm(room){
+    var html =
+      '<div class="modal-grid"><div class="cardx">'+
+        '<div class="cardx-head">Sửa thông tin phòng</div>'+
+        '<div class="cardx-body">'+
+          '<div class="field"><label>Số phòng<input name="room_no" value="'+(room.room_no||'')+'"></label></div>'+
+          '<div class="field"><label>Loại phòng'+
+            '<select name="room_type">'+
+              '<option value="APARTMENT" '+(room.room_type==='APARTMENT'?'selected':'')+'>APARTMENT</option>'+
+              '<option value="OFFICE" '+(room.room_type==='OFFICE'?'selected':'')+'>OFFICE</option>'+
+              '<option value="SHOP" '+(room.room_type==='SHOP'?'selected':'')+'>SHOP</option>'+
+              '<option value="OTHER" '+(room.room_type==='OTHER'?'selected':'')+'>OTHER</option>'+
+            '</select></label></div>'+
+          '<div class="field"><label>Trạng thái'+
+            '<select name="status">'+
+              '<option value="ACTIVE" '+(room.status==='ACTIVE'?'selected':'')+'>ACTIVE</option>'+
+            '</select></label></div>'+
+          '<div class="field"><label>HĐ bắt đầu (YYYY-MM-DD)<input name="contract_start" value="'+(fmtDate(room.contract_start)||'')+'"></label></div>'+
+          '<div class="field"><label>HĐ kết thúc (YYYY-MM-DD)<input name="contract_end" value="'+(fmtDate(room.contract_end)||'')+'"></label></div>'+
+        '</div></div></div>'+
+      '<div class="actions-row">'+
+        '<button type="button" class="btn" onclick="closeModal()">Hủy</button>'+
+        '<button type="submit" class="btn" style="background:#2563eb;color:#fff;border-color:#2563eb">Lưu thay đổi</button>'+
+      '</div>';
+
+    openModal('Sửa thông tin phòng '+room.room_no, html, function(data){
+      var payload = {
+        room_no: data.room_no || null,
+        room_type: data.room_type || null,
+        status: data.status || null,
+        contract_start: data.contract_start || null,
+        contract_end: data.contract_end || null
+      };
+
+      return putJSON('/api/rooms/'+room.id, payload)
+        .then(function(res){
+          var updated = res.room || room;
+          var idx = state.rooms.findIndex(function(r){return r.id===room.id;});
+          if(idx>=0) state.rooms[idx] = updated;
+          renderRooms();
+          selectRoom(room.id);
+          alert('Đã cập nhật thông tin phòng.');
+        });
+    });
+  }
+
+  function deleteRoom(room){
+    apiLoadResidents(room.id).catch(function(){return [];}).then(function(people){
+      var head = people.find(function(p){return p.relation_to_head === 'Chủ hộ';});
+      var msg =
+        'Bạn chắc chắn muốn xóa PHÒNG '+room.room_no+'?\n'+
+        '• Sẽ xóa toàn bộ cư dân trong phòng.\n'+
+        (head ? ('• Sẽ xóa tài khoản của Chủ hộ ('+head.full_name+').\n') : '• Sẽ xóa tài khoản gắn với phòng (nếu có).\n')+
+        '• Thao tác này không thể hoàn tác.';
+      if(!confirm(msg)) return;
+
+      delJSON('/api/rooms/'+room.id)
+        .then(function(){
+          delete state.cacheResidents[room.id];
+          state.selectedResidents = {};
+          return apiLoadRooms(currentFilter());
+        })
+        .then(function(rms){
+          state.rooms = rms;
+          renderRooms();
+          if(state.rooms.length) selectRoom(state.rooms[0].id);
+          else renderDetailEmpty('Chưa có phòng nào.');
+          alert('Đã xóa phòng và dữ liệu liên quan.');
+        })
+        .catch(function(err){
+          console.error('Lỗi xóa phòng:', err);
+          alert(err.message || 'Không xóa được phòng (kiểm tra API DELETE /api/rooms/:id trên server).');
+        });
+    });
+  }
+
+  /* FILTER */
+  function currentFilter(){
+    return {
+      q: document.getElementById('q').value.trim(),
+      status: document.getElementById('fltStatus').value,
+      room_type: document.getElementById('fltType').value
+    };
+  }
+  function applyFilter(){
+    apiLoadRooms(currentFilter())
+      .then(function(rms){
+        state.rooms = rms;
+        renderRooms();
+        if(state.rooms.length){
+          if(!state.rooms.find(function(r){return r.id===state.currentRoomId;})){
+            selectRoom(state.rooms[0].id);
+          }else{
+            selectRoom(state.currentRoomId);
+          }
+        }else{
+          renderDetailEmpty('Chưa có phòng nào.');
+        }
+      })
+      .catch(function(err){
+        console.error(err);
+        document.getElementById('roomList').innerHTML =
+          '<div class="empty">Lỗi tải dữ liệu.</div>';
+      });
+  }
+
+  /* INIT */
+  document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('btnCreateRoomList')
+      .addEventListener('click', openCreateRoomBundleForm);
+
+    document.getElementById('q').addEventListener('input', function(){
+      clearTimeout(window.__bmTimer);
+      window.__bmTimer = setTimeout(applyFilter, 250);
+    });
+    document.getElementById('fltStatus').addEventListener('change', applyFilter);
+    document.getElementById('fltType').addEventListener('change', applyFilter);
+
+    apiLoadRooms()
+      .then(function(rms){
+        state.rooms = rms;
+        renderRooms();
+        if(state.rooms.length) selectRoom(state.rooms[0].id);
+        else renderDetailEmpty('Chưa có phòng nào.');
+      })
+      .catch(function(err){
+        console.error(err);
+        document.getElementById('roomList').innerHTML =
+          '<div class="empty">Lỗi tải dữ liệu.</div>';
+      });
+  });
+  </script>
+</body>
+</html>
