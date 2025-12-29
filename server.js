@@ -5,6 +5,7 @@ const cors = require('cors');
 const mysql = require('mysql2/promise');
 const session = require('express-session');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 
@@ -12,7 +13,7 @@ const app = express();
 // CORS + body parser + static
 // ===============================
 app.use(cors({
-  origin: 'http://localhost:5000', // FE cùng cổng thì thực ra không cần CORS, giữ tạm
+  origin: '*', // FE cùng cổng thì thực ra không cần CORS, giữ tạm
   credentials: true
 }));
 app.use(express.json());
@@ -22,10 +23,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // MySQL Pool
 // ===============================
 const pool = mysql.createPool({
-  host: '127.0.0.1',
-  user: 'aduser',
-  password: 'lienquaṇ̉',
-  database: 'bluedb',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 5,
   charset: 'utf8mb4'
