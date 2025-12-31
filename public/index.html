@@ -87,16 +87,6 @@
   }
   .brand .sub{font-size:13px; color:#6b7280}
 
-  .seg{
-    display:flex; gap:8px; padding:6px; background:#f1f5f9;
-    border-radius:14px; width:max-content; margin:6px 0 14px;
-  }
-  .seg button{
-    border:0; background:transparent; padding:8px 14px; border-radius:10px;
-    font-size:13px; font-weight:600; color:#334155; cursor:pointer; transition:.2s;
-  }
-  .seg button.active{background:#fff; color:#2563eb; box-shadow:0 1px 4px rgba(15,23,42,.1);}
-
   .field{margin:12px 0 16px}
   .label{font-size:14px; color:#0f172a; margin-bottom:6px}
   .control{position:relative}
@@ -170,12 +160,6 @@
   </div>
 
   <div class="card" aria-label="Login Card">
-    <div class="seg" id="seg" role="tablist" aria-label="Chọn loại tài khoản">
-      <!-- SỬA: dùng role 'admin' và 'user' trùng với DB/API -->
-      <button type="button" class="active" data-role="ADMIN" role="tab" aria-selected="true">Quản lý</button>
-      <button type="button" data-role="RESIDENT" role="tab" aria-selected="false">Cư dân</button>
-    </div>
-
     <div class="brand">
       <div class="logo">B</div>
       <div>
@@ -214,18 +198,21 @@
 
   </div>
 
+<script src="/common/apiClient.js"></script>
+<script src="/common/sessionClient.js"></script>
 <script>
-  // Segmented control: admin / user
-  let currentRole = 'ADMIN';
-  const seg = document.getElementById('seg');
-  seg.addEventListener('click', (e)=>{
-    if(e.target.tagName !== 'BUTTON') return;
-    [...seg.children].forEach(b=>{
-      b.classList.remove('active'); b.setAttribute('aria-selected','false');
-    });
-    e.target.classList.add('active'); e.target.setAttribute('aria-selected','true');
-    currentRole = e.target.dataset.role; // 'admin' hoặc 'user'
-  });
+  // Nếu đã đăng nhập rồi thì redirect về trang tương ứng
+  (function() {
+    const userSession = session.get();
+    if (userSession) {
+      console.log('[Login] Đã có session, redirect...', userSession);
+      if (userSession.role === 'ADMIN') {
+        window.location.href = '/admin/dashboard.html';
+      } else {
+        window.location.href = '/resident/home.html';
+      }
+    }
+  })();
 
   // Toast
   const toastEl = document.getElementById('toast');
@@ -271,21 +258,20 @@
           return;
         }
 
-        // data.role từ API: 'admin' hoặc 'user'
-        if (currentRole === 'ADMIN' && data.role !== 'ADMIN') {
-          showToast('Tài khoản này không phải quản lý');
-          return;
-        }
-        if (currentRole === 'user' && data.role !== 'user') {
-          showToast('Tài khoản này không phải cư dân');
-          return;
+        if (window.session && typeof session.save === 'function') {
+          session.save({
+            id: data.id,
+            username: data.username,
+            role: data.role,
+            person_id: data.person_id
+          });
         }
 
         // Redirect đúng trang theo role thật trong DB
         if (data.role === 'ADMIN') {
-          window.location.href = '/admin/home_admin.html';
+          window.location.href = '/admin/dashboard.html';
         } else {
-          window.location.href = '/resident/home_resident.html';
+          window.location.href = '/resident/home.html';
         }
 
       } catch (err) {

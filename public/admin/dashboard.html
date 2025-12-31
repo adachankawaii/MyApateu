@@ -82,8 +82,27 @@
       box-shadow:0 6px 16px rgba(0,0,0,.25); 
       transition:transform .08s cubic-bezier(0.4, 0, 0.2, 1), background .08s ease;
       will-change: transform;
+      position: relative;
     }
     .icon-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.2)}
+    .icon-btn .badge{
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 10px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(0,0,0,.3);
+      box-shadow: 0 2px 8px rgba(239,68,68,.6);
+    }
     
     /* ===== Search Box & Dropdown ===== */
     .search-wrapper{position:relative;flex:1;}
@@ -248,6 +267,44 @@
       animation: slideIn .18s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
 
+    /* ===== Modal Notifications ===== */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.5);
+      display:none;align-items:center;justify-content:center;z-index:100;
+    }
+    .modal-overlay.show{display:flex;}
+    .modal-card{
+      width:min(600px,94vw);max-height:85vh;
+      background:var(--card);border:1px solid var(--stroke);
+      border-radius:var(--radius);box-shadow:var(--shadow);
+      display:flex;flex-direction:column;
+    }
+    .modal-header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 18px;border-bottom:1px solid var(--stroke);
+    }
+    .modal-header h3{margin:0;font-size:18px;font-weight:900;color:var(--text);}
+    .modal-body{
+      padding:14px 18px;overflow:auto;flex:1;
+    }
+    .noti-item{
+      padding:12px;margin-bottom:10px;
+      border:1px solid var(--stroke);border-radius:12px;
+      background:color-mix(in oklab, var(--card) 98%, transparent);
+    }
+    .noti-item .noti-title{
+      font-weight:900;font-size:14px;margin-bottom:4px;color:var(--text);
+    }
+    .noti-item .noti-info{
+      font-size:12px;color:var(--muted);margin-bottom:6px;
+    }
+    .noti-item .noti-amount{
+      font-size:15px;font-weight:900;color:#ef4444;
+    }
+    .noti-empty{
+      padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;
+    }
+
     /* ===== Footnote ===== */
     .footnote{
       position:fixed;
@@ -354,11 +411,26 @@
         <path d="M12 22a2.5 2.5 0 0 0 2.4-2H9.6A2.5 2.5 0 0 0 12 22Z" fill="white" opacity=".9"/>
         <path d="M19 17H5l1.2-1.8A2 2 0 0 0 7 14v-3a5 5 0 1 1 10 0v3c0 .4.1.8.3 1.2L19 17Z" stroke="white" stroke-width="1.8" fill="none" opacity=".9"/>
       </svg>
+      <span class="badge" id="notiBadge" style="display:none">0</span>
     </button>
   </header>
 
   <!-- ===== Overlay & Sidebar ===== -->
   <div class="overlay" id="overlay" aria-hidden="true"></div>
+
+  <!-- ===== Modal Notifications ===== -->
+  <div class="modal-overlay" id="notiModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🔔 Thông báo khoản thu quá hạn</h3>
+        <button class="btn" id="closeNotiModal">✕</button>
+      </div>
+      <div class="modal-body" id="notiModalBody">
+        <div class="noti-empty">Đang tải...</div>
+      </div>
+    </div>
+  </div>
+
   <aside class="sidebar" id="drawer" role="complementary" aria-label="Cài đặt tài khoản & Web">
     <div class="side-header">
       <div class="avatar">B</div>
@@ -419,6 +491,23 @@
     </div>
   </main>
 
+  <!-- Session & API Client -->
+  <script src="../common/sessionClient.js"></script>
+  <script src="../common/apiClient.js"></script>
+  <script>
+    // Check session trước khi load trang
+    (async function() {
+      const isValid = await session.requireAuthAsync('/index.html');
+      if (!isValid) return; // Đã redirect
+      
+      // Kiểm tra role admin
+      if (!session.isAdmin()) {
+        alert('Bạn không có quyền truy cập trang này!');
+        window.location.href = '/index.html';
+        return;
+      }
+    })();
+  </script>
   <script>
     /* ================= I18N ================= */
     const I18N = {
@@ -652,8 +741,85 @@
     });
 
     /* ===== Misc ===== */
-    btnNoti.addEventListener('click', ()=> alert('3 notifications (demo).'));
+    const btnNoti = document.getElementById('btnNoti');
+    const notiBadge = document.getElementById('notiBadge');
+    const notiModal = document.getElementById('notiModal');
+    const closeNotiModal = document.getElementById('closeNotiModal');
+    const notiModalBody = document.getElementById('notiModalBody');
     
+    let overdueCount = 0;
+    let overdueItems = [];
+
+    // Load thông báo khoản phí quá hạn
+    function loadOverdueNotifications(){
+      fetch('/api/fees/overdue', {credentials:'include'})
+        .then(r => r.json())
+        .then(data => {
+          if(data.ok && Array.isArray(data.items)){
+            overdueItems = data.items;
+            const unreadKey = 'bm_overdue_read';
+            const readIds = JSON.parse(localStorage.getItem(unreadKey) || '[]');
+            const unreadItems = overdueItems.filter(item => !readIds.includes(item.id));
+            
+            overdueCount = unreadItems.length;
+            
+            if(overdueCount > 0){
+              notiBadge.textContent = overdueCount;
+              notiBadge.style.display = 'flex';
+            } else {
+              notiBadge.style.display = 'none';
+            }
+          }
+        })
+        .catch(err => console.error('Lỗi load thông báo:', err));
+    }
+
+    // Hiển thị modal thông báo
+    function showNotificationModal(){
+      // Đánh dấu đã đọc
+      const readIds = overdueItems.map(item => item.id);
+      localStorage.setItem('bm_overdue_read', JSON.stringify(readIds));
+      overdueCount = 0;
+      notiBadge.style.display = 'none';
+
+      // Render nội dung
+      if(overdueItems.length === 0){
+        notiModalBody.innerHTML = '<div class="noti-empty">Không có khoản thu nào quá hạn 🎉</div>';
+      } else {
+        notiModalBody.innerHTML = overdueItems.map(item => {
+          const dueDate = item.due_date ? new Date(item.due_date).toLocaleDateString('vi-VN') : '-';
+          const remaining = Number(item.remaining || 0).toLocaleString('vi-VN');
+          return (
+            '<div class="noti-item">'+
+              '<div class="noti-title">'+item.fee_name+' • Phòng '+(item.room_no||'-')+'</div>'+
+              '<div class="noti-info">Hạn nộp: '+dueDate+' • Loại: '+(item.fee_type||'-')+'</div>'+
+              '<div class="noti-amount">Còn thiếu: '+remaining+'đ</div>'+
+            '</div>'
+          );
+        }).join('');
+      }
+
+      notiModal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeNotificationModal(){
+      notiModal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    btnNoti.addEventListener('click', showNotificationModal);
+    closeNotiModal.addEventListener('click', closeNotificationModal);
+    notiModal.addEventListener('click', e => {
+      if(e.target === notiModal) closeNotificationModal();
+    });
+
+    // Load ngay khi trang load
+    loadOverdueNotifications();
+    
+    // Refresh mỗi 5 phút
+    setInterval(loadOverdueNotifications, 5 * 60 * 1000);
+
     /* ===== Search Functionality ===== */
     const searchInput = document.getElementById('siteSearch');
     const searchResults = document.getElementById('searchResults');
@@ -736,11 +902,17 @@
       e.stopPropagation();
     });
 
-    btnLogout.addEventListener('click', ()=> { window.location.href = '/auth/login.html'; });
-    btnProfile.addEventListener('click', ()=> { window.location.href = '/admin/profile.html'; });
-    btnAbout.addEventListener('click', ()=> { window.location.href = '/admin/about.html'; });
-    btnHowto.addEventListener('click', ()=> { window.location.href = '/admin/howto.html'; });
-    btnHelp.addEventListener('click', ()=> { window.location.href = '/admin/support.html'; });
+    btnLogout.addEventListener('click', ()=> { 
+      if (window.session && typeof session.logout === 'function') {
+        session.logout('/index.html');
+      } else {
+        window.location.href = '/index.html';
+      }
+    });
+    btnProfile.addEventListener('click', ()=> { window.location.href = '/common/profile.html'; });
+    btnAbout.addEventListener('click', ()=> { window.location.href = '/common/about.html'; });
+    btnHowto.addEventListener('click', ()=> { window.location.href = '/common/howto.html'; });
+    btnHelp.addEventListener('click', ()=> { window.location.href = '/common/support.html'; });
 
     /* ===== Init ===== */
     (function init(){
