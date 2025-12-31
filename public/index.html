@@ -214,6 +214,8 @@
 
   </div>
 
+<script src="/common/apiClient.js"></script>
+<script src="/common/sessionClient.js"></script>
 <script>
   // Segmented control: admin / user
   let currentRole = 'ADMIN';
@@ -224,7 +226,7 @@
       b.classList.remove('active'); b.setAttribute('aria-selected','false');
     });
     e.target.classList.add('active'); e.target.setAttribute('aria-selected','true');
-    currentRole = e.target.dataset.role; // 'admin' hoặc 'user'
+    currentRole = e.target.dataset.role; // 'ADMIN' hoặc 'RESIDENT'
   });
 
   // Toast
@@ -271,21 +273,30 @@
           return;
         }
 
-        // data.role từ API: 'admin' hoặc 'user'
+        // data.role từ API: 'ADMIN' hoặc 'RESIDENT'
         if (currentRole === 'ADMIN' && data.role !== 'ADMIN') {
           showToast('Tài khoản này không phải quản lý');
           return;
         }
-        if (currentRole === 'user' && data.role !== 'user') {
+        if (currentRole === 'RESIDENT' && data.role !== 'RESIDENT') {
           showToast('Tài khoản này không phải cư dân');
           return;
         }
 
+        if (window.session && typeof session.save === 'function') {
+          session.save({
+            id: data.id,
+            username: data.username,
+            role: data.role,
+            person_id: data.person_id
+          });
+        }
+
         // Redirect đúng trang theo role thật trong DB
         if (data.role === 'ADMIN') {
-          window.location.href = '/admin/home_admin.html';
+          window.location.href = '/admin/dashboard.html';
         } else {
-          window.location.href = '/resident/home_resident.html';
+          window.location.href = '/resident/home.html';
         }
 
       } catch (err) {
