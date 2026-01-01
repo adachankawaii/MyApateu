@@ -58,7 +58,7 @@
     .tab{
       flex:1; padding:8px 16px; border-radius:8px; text-align:center; cursor:pointer;
       font-weight:600; transition:all .2s ease; border:none; background:transparent; color:var(--muted);
-    }
+    }z
     .tab.active{background:var(--card); color:var(--text); box-shadow:var(--shadow-2)}
 
     .btn{
@@ -376,7 +376,7 @@
       </div>
 
       <div style="margin-top:20px; text-align:center">
-        <a href="/admin/home_admin.html" class="btn">← Về trang chủ</a>
+        <a href="/admin/dashboard.html" class="btn">← Về trang chủ</a>
       </div>
     </div>
   </main>
@@ -398,7 +398,7 @@
 
     // Toolbar events
     document.getElementById('btnBack').addEventListener('click', () => {
-      window.location.href = '/admin/home_admin.html';
+      window.location.href = '/admin/dashboard.html';
     });
     document.getElementById('btnNotifications').addEventListener('click', () => {
       alert('Thông báo: Vui lòng kiểm tra các khoản phí gửi xe UNPAID.');

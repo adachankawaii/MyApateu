@@ -101,6 +101,12 @@
     .text-xs { font-size: 11px; }
     .bordered-table { border-collapse: collapse; width: 100%; font-size: 12px; }
     .bordered-table th, .bordered-table td { border: 1px solid #e5e7eb; padding: 6px 8px; }
+    .bill-row { cursor: pointer; transition: background 0.2s; }
+    .bill-row:hover { background: #f9fafb; }
+    .bill-row.active { background: #eff6ff; }
+    .action-row { background: #f9fafb; }
+    .action-row td { padding: 12px 20px; border-top: none; }
+    .action-btns { display: flex; gap: 8px; }
   </style>
 </head>
 <body>
@@ -170,7 +176,6 @@
               <th>Hạn nộp</th>
               <th>Trạng thái</th>
               <th>Tạo lúc</th>
-              <th>Hành động</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -341,7 +346,7 @@
     const toDateOnly = s => s ? String(s).slice(0, 10) : '';
 
     document.getElementById('Back').onclick = () => {
-      window.location.href = '/admin/home_admin.html';
+      window.location.href = '/admin/dashboard.html';
     };
 
     async function loadRooms() {
@@ -400,6 +405,8 @@
       (data.items || []).forEach(it => {
         idx++;
         const tr = document.createElement('tr');
+        tr.className = 'bill-row';
+        tr.dataset.feeId = it.id;
 
         const roomLabel = it.room_no || (it.room_id ? ('Room ' + it.room_id) : '');
         const plate = it.plate || '';
@@ -431,14 +438,25 @@
           <td>${dueDate} ${lateBadge}</td>
           <td>${statusBadge}</td>
           <td>${createdDate}</td>
-          <td class="actions">
-            <button class="btn secondary sm" data-act="pay" data-id="${it.id}">Thu tiền</button>
-            <button class="btn secondary sm" data-act="history" data-id="${it.id}">Lịch sử</button>
-            <button class="btn secondary sm" data-act="edit" data-id="${it.id}">Sửa</button>
-            <button class="btn secondary sm" data-act="del" data-id="${it.id}">Xóa</button>
-          </td>
         `;
         tbody.appendChild(tr);
+
+        // Thêm hàng action (ban đầu ẩn)
+        const actionTr = document.createElement('tr');
+        actionTr.className = 'action-row';
+        actionTr.dataset.feeId = it.id;
+        actionTr.style.display = 'none';
+        actionTr.innerHTML = `
+          <td colspan="14">
+            <div class="action-btns">
+              <button class="btn secondary sm" data-act="pay" data-id="${it.id}">Thu tiền</button>
+              <button class="btn secondary sm" data-act="history" data-id="${it.id}">Lịch sử</button>
+              <button class="btn secondary sm" data-act="edit" data-id="${it.id}">Sửa</button>
+              <button class="btn secondary sm" data-act="del" data-id="${it.id}">Xóa</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(actionTr);
       });
     }
 
@@ -714,6 +732,38 @@
 
     // ====== TABLE ROW ACTIONS ======
     function attachRowActions() {
+      // Click vào hàng để toggle action row
+      el('#tbl tbody').addEventListener('click', (ev) => {
+        const billRow = ev.target.closest('.bill-row');
+        if (billRow) {
+          const feeId = billRow.dataset.feeId;
+          const actionRow = document.querySelector(`.action-row[data-fee-id="${feeId}"]`);
+          
+          // Đóng tất cả action rows khác
+          document.querySelectorAll('.action-row').forEach(row => {
+            if (row.dataset.feeId !== feeId) {
+              row.style.display = 'none';
+            }
+          });
+          document.querySelectorAll('.bill-row').forEach(row => {
+            if (row.dataset.feeId !== feeId) {
+              row.classList.remove('active');
+            }
+          });
+          
+          // Toggle current action row
+          if (actionRow.style.display === 'none') {
+            actionRow.style.display = '';
+            billRow.classList.add('active');
+          } else {
+            actionRow.style.display = 'none';
+            billRow.classList.remove('active');
+          }
+          return;
+        }
+      });
+
+      // Xử lý click các nút action
       el('#tbl').addEventListener('click', async (ev) => {
         const btn = ev.target.closest('button[data-act]');
         if (!btn) return;
