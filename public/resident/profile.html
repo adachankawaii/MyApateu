@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#3b82f6" />
+  <title>BlueMoon — Hồ sơ cá nhân</title>
+  <style>
+    :root {
+      --bg-grad-start: #3b82f6;
+      --bg-grad-end: #1e3a8a;
+      --text: #0b1226;
+      --muted: #56607a;
+      --card: #ffffff;
+      --stroke: #e6eaf5;
+      --radius: 18px;
+      --shadow: 0 18px 45px rgba(13,35,69,.18);
+    }
+    [data-theme="dark"] {
+      --bg-grad-start: #0f172a;
+      --bg-grad-end: #0b1220;
+      --text: #e5e7eb;
+      --muted: #a3adc2;
+      --card: #0b1226;
+      --stroke: #1f2a44;
+      --shadow: 0 18px 45px rgba(0,0,0,.45);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    body {
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+    }
+
+    .toolbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      z-index: 20;
+      color: #fff;
+      background: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.08));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(255,255,255,.18);
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      cursor: pointer;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      transition: all .12s ease;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,.22); }
+
+    .main {
+      min-height: 100%;
+      padding-top: 84px;
+      padding-bottom: 40px;
+    }
+
+    .container {
+      width: min(600px, 92vw);
+      margin: 0 auto;
+    }
+
+    .profile-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, #3b82f6, #1e3a8a);
+      padding: 32px 24px;
+      text-align: center;
+      color: #fff;
+    }
+
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 900;
+      margin: 0 auto 12px;
+      border: 3px solid rgba(255,255,255,.3);
+    }
+
+    .profile-header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .profile-header p {
+      margin: 4px 0 0;
+      opacity: 0.8;
+    }
+
+    .profile-body {
+      padding: 24px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--stroke);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .info-value {
+      font-weight: 600;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <button class="icon-btn" id="btnBack" aria-label="Quay lại">←</button>
+    <span style="font-weight: 800; font-size: 18px; flex: 1;">Hồ sơ cá nhân</span>
+    <button class="icon-btn" id="btnTheme" aria-label="Đổi theme">🌙</button>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="avatar" id="avatarText">?</div>
+          <h1 id="fullName">Đang tải...</h1>
+          <p id="roleText">Cư dân</p>
+        </div>
+        <div class="profile-body" id="profileBody">
+          <div class="loading">Đang tải thông tin...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/common/apiClient.js"></script>
+  <script src="/common/sessionClient.js"></script>
+  <script src="/common/themeManager.js"></script>
+  <script>
+    // Auth check
+    if (!session.requireAuth('/index.html')) {
+      // Redirect happens in requireAuth
+    }
+
+    // Load profile
+    async function loadProfile() {
+      try {
+        const result = await api.me();
+        if (result.ok && result.user) {
+          const user = result.user;
+          
+          document.getElementById('fullName').textContent = user.full_name || user.username || 'Cư dân';
+          document.getElementById('avatarText').textContent = (user.full_name || user.username || '?')[0].toUpperCase();
+          document.getElementById('roleText').textContent = user.role === 'ADMIN' ? 'Quản trị viên' : 'Cư dân';
+
+          document.getElementById('profileBody').innerHTML = `
+            <div class="info-row">
+              <span class="info-label">Tên đăng nhập</span>
+              <span class="info-value">${user.username || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Họ và tên</span>
+              <span class="info-value">${user.full_name || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-value">${user.email || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Số điện thoại</span>
+              <span class="info-value">${user.phone || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Vai trò</span>
+              <span class="info-value">${user.role === 'ADMIN' ? 'Quản trị viên' : 'Cư dân'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Ngày tạo</span>
+              <span class="info-value">${user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : '-'}</span>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.error('Error loading profile:', e);
+        document.getElementById('profileBody').innerHTML = `
+          <div class="loading" style="color: #ef4444;">
+            Lỗi tải thông tin: ${e.message}
+          </div>
+        `;
+      }
+    }
+
+    loadProfile();
+
+    // Theme
+    document.getElementById('btnTheme').textContent = theme.isDark() ? '☀️' : '🌙';
+    document.getElementById('btnTheme').addEventListener('click', () => {
+      const newTheme = theme.toggle();
+      document.getElementById('btnTheme').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    });
+
+    // Back button
+    document.getElementById('btnBack').addEventListener('click', () => {
+      const userData = session.get();
+      if (userData && userData.role === 'ADMIN') {
+        location.href = '/admin/dashboard.html';
+      } else {
+        location.href = '/resident/home.html';
+      }
+    });
+  </script>
+</body>
+</html>
