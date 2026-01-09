@@ -166,34 +166,31 @@
     }
 
     @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important} }
-
-    /* Session Check - Hidden while loading */
-    body.checking-session { opacity: 0; }
   </style>
 </head>
-<body class="checking-session">
-  <!-- Session & API Client -->
-  <script src="../common/sessionClient.js"></script>
-  <script src="../common/apiClient.js"></script>
+<body>
   <script>
-    // Check session trước khi load trang
-    (async function() {
-      const isValid = await session.requireAuthAsync('/index.html');
-      if (!isValid) return; // Đã redirect
-      
-      // Kiểm tra role resident (hoặc admin cũng được xem)
-      const userSession = session.get();
-      if (!userSession || !['RESIDENT', 'ADMIN'].includes(userSession.role)) {
-        alert('Bạn không có quyền truy cập trang này!');
+    // Kiểm tra authentication ngay lập tức
+    (function() {
+      const SESSION_KEY = 'bluemoon_session';
+      try {
+        const data = localStorage.getItem(SESSION_KEY);
+        if (!data) {
+          window.location.href = '/index.html';
+          return;
+        }
+        const session = JSON.parse(data);
+        const maxAge = 8 * 60 * 60 * 1000;
+        if (Date.now() - session.timestamp > maxAge) {
+          localStorage.removeItem(SESSION_KEY);
+          window.location.href = '/index.html';
+          return;
+        }
+      } catch (e) {
         window.location.href = '/index.html';
-        return;
       }
-      
-      // Session OK, hiện trang
-      document.body.classList.remove('checking-session');
     })();
   </script>
-
   <!-- ===== SVG SPRITE ===== -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
     <symbol id="ico-bills" viewBox="0 0 24 24"><path d="M4 4h16v14H4V4Zm2 3h12v2H6V7Zm0 4h8v2H6v-2Zm0 4h6v2H6v-2Z"/></symbol>
@@ -562,11 +559,8 @@
     btnNoti.addEventListener('click', ()=> alert('2 notifications (demo).'));
     siteSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); alert('Search: '+e.currentTarget.value);} });
     btnLogout.addEventListener('click', ()=> { 
-      if (window.session && typeof session.logout === 'function') {
-        session.logout('/index.html');
-      } else {
-        window.location.href = '/index.html';
-      }
+      localStorage.removeItem('bluemoon_session');
+      window.location.href = '/index.html'; 
     });
 
     /* ===== Init ===== */
@@ -577,6 +571,15 @@
       renderTexts();
       renderGrid();
     })();
+  </script>
+
+  <!-- Session & Auth Protection -->
+  <script src="/common/sessionClient.js"></script>
+  <script>
+    // Kiểm tra authentication - redirect về trang login nếu chưa đăng nhập
+    if (!session.isAuthenticated()) {
+      window.location.href = '/index.html';
+    }
   </script>
 
   <!-- quick refs for elements used in JS -->

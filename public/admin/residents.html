@@ -88,9 +88,6 @@
       font-size:13px;
     }
 
-    /* Session Check - Hidden while loading */
-    body.checking-session { opacity: 0; }
-
     /* Modal */
     #modalCard{
       width: min(1000px, 96vw) !important;
@@ -159,28 +156,34 @@
   </style>
 </head>
 
-<body class="checking-session">
-  <!-- Session & API Client -->
-  <script src="../common/sessionClient.js"></script>
-  <script src="../common/apiClient.js"></script>
+<body>
   <script>
-    // Check session trước khi load trang
-    (async function() {
-      const isValid = await session.requireAuthAsync('/index.html');
-      if (!isValid) return; // Đã redirect
-      
-      // Kiểm tra role admin
-      if (!session.isAdmin()) {
-        alert('Bạn không có quyền truy cập trang này!');
+    // Kiểm tra authentication ngay lập tức
+    (function() {
+      const SESSION_KEY = 'bluemoon_session';
+      try {
+        const data = localStorage.getItem(SESSION_KEY);
+        if (!data) {
+          window.location.href = '/index.html';
+          return;
+        }
+        const session = JSON.parse(data);
+        const maxAge = 8 * 60 * 60 * 1000;
+        if (Date.now() - session.timestamp > maxAge) {
+          localStorage.removeItem(SESSION_KEY);
+          window.location.href = '/index.html';
+          return;
+        }
+        if (session.role !== 'ADMIN') {
+          alert('Bạn không có quyền truy cập trang này!');
+          window.location.href = '/index.html';
+          return;
+        }
+      } catch (e) {
         window.location.href = '/index.html';
-        return;
       }
-      
-      // Session OK, hiện trang
-      document.body.classList.remove('checking-session');
     })();
   </script>
-
   <!-- Modal overlay -->
   <div id="modalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50">
     <div id="modalCard" style="width:min(560px,94vw);background:var(--card);color:var(--text);border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow);overflow:hidden">
@@ -444,7 +447,7 @@
       var cb = isHead ? '' :
         '<input type="checkbox" data-rid="'+p.id+'" aria-label="Chọn '+(p.full_name||'')+'">';
       return (
-        '<tr data-person-id="'+p.id+'" data-editable="1" style="cursor:pointer">'+
+        '<tr data-person-id="'+p.id+'" data-editable="'+(isHead?'0':'1')+'">'+
           '<td>'+cb+'</td>'+
           '<td>'+(p.full_name||'')+'</td>'+
           '<td>'+(p.cccd||'')+'</td>'+
@@ -565,7 +568,7 @@
         var tr = e.target.closest('tr[data-person-id]');
         if(!tr) return;
         if(e.target.tagName === 'INPUT') return;
-        if(tr.getAttribute('data-editable') === '0') return;
+        if(tr.getAttribute('data-editable') !== '1') return;
         var pid = Number(tr.getAttribute('data-person-id'));
         var person = people.find(function(p){return p.id===pid;});
         if(person) openEditResidentForm(room, person);
@@ -614,10 +617,10 @@
               '<select name="status">'+
                 '<option value="ACTIVE">ACTIVE</option>'+
               '</select></label></div>'+
-            '<div class="field"><label>HĐ bắt đầu'+
-              '<input type="date" name="contract_start"></label></div>'+
-            '<div class="field"><label>HĐ kết thúc'+
-              '<input type="date" name="contract_end"></label></div>'+
+            '<div class="field"><label>HĐ bắt đầu (YYYY-MM-DD)'+
+              '<input name="contract_start"></label></div>'+
+            '<div class="field"><label>HĐ kết thúc (YYYY-MM-DD)'+
+              '<input name="contract_end"></label></div>'+
           '</div>'+
         '</div>'+
 
@@ -639,7 +642,7 @@
             '<div class="field"><label>CCCD<input name="p_cccd"></label></div>'+
             '<div class="field"><label>Dân tộc<input name="p_ethnicity"></label></div>'+
             '<div class="field"><label>Nghề nghiệp<input name="p_occupation"></label></div>'+
-            '<div class="field"><label>Ngày sinh<input type="date" name="p_dob"></label></div>'+
+            '<div class="field"><label>Ngày sinh (YYYY-MM-DD)<input name="p_dob"></label></div>'+
             '<div class="field"><label>Quê quán<input name="p_hometown"></label></div>'+
             '<div class="field"><label>Quan hệ với chủ hộ'+
               '<select name="p_relation_to_head">'+
@@ -735,48 +738,7 @@
   }
 
   function openEditResidentForm(room, person){
-    var isHead = (person.relation_to_head === 'Chủ hộ');
-    var html =
-      '<input type="hidden" name="room_id" value="'+room.id+'">'+
-      '<label>Họ tên*<br><input name="full_name" value="'+(person.full_name||'')+'" required style="width:100%"></label>'+
-      '<label>CCCD<br><input name="cccd" value="'+(person.cccd||'')+'" style="width:100%"></label>'+
-      '<label>Dân tộc<br><input name="ethnicity" value="'+(person.ethnicity||'')+'" style="width:100%"></label>'+
-      '<label>Nghề nghiệp<br><input name="occupation" value="'+(person.occupation||'')+'" style="width:100%"></label>'+
-      '<label>Ngày sinh<br><input type="date" name="dob" value="'+fmtDate(person.dob)+'" style="width:100%"></label>'+
-      '<label>Quê quán<br><input name="hometown" value="'+(person.hometown||'')+'" style="width:100%"></label>'+
-      '<label>Quan hệ với chủ hộ<br>'+
-        '<select name="relation_to_head" style="width:100%" '+(isHead?'disabled':'')+'>'+
-          '<option value="Chủ hộ" '+(person.relation_to_head==='Chủ hộ'?'selected':'')+'>Chủ hộ</option>'+
-          '<option value="Cư dân" '+(person.relation_to_head==='Cư dân'?'selected':'')+'>Cư dân</option>'+
-          '<option value="Vợ/chồng" '+(person.relation_to_head==='Vợ/chồng'?'selected':'')+'>Vợ/chồng</option>'+
-          '<option value="Con" '+(person.relation_to_head==='Con'?'selected':'')+'>Con</option>'+
-        '</select>'+
-      '</label>'+
-      '<label>Điện thoại<br><input name="phone" value="'+(person.phone||'')+'" style="width:100%"></label>'+
-      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">'+
-        '<button type="button" class="btn" onclick="closeModal()">Hủy</button>'+
-        '<button type="submit" class="btn" style="background:#2563eb;color:#fff;border-color:#2563eb">Lưu</button>'+
-      '</div>';
-
-    openModal('Sửa nhân khẩu • '+person.full_name, html, function(data){
-      // Nếu là chủ hộ, giữ nguyên relation_to_head
-      if(isHead) data.relation_to_head = 'Chủ hộ';
-      
-      return putJSON('/api/persons/'+person.id, data)
-        .then(function(){
-          delete state.cacheResidents[room.id];
-          return apiLoadResidents(room.id);
-        })
-        .then(function(people){
-          renderDetail(room, people);
-          return apiLoadRooms(currentFilter());
-        })
-        .then(function(rms){
-          state.rooms = rms;
-          renderRooms();
-          alert('Đã cập nhật thông tin nhân khẩu.');
-        });
-    });
+    alert('Sửa nhân khẩu cần API PUT /api/persons/:id ở server. Frontend đang để placeholder.');
   }
 
   function openEditRoomForm(room){
@@ -796,8 +758,8 @@
             '<select name="status">'+
               '<option value="ACTIVE" '+(room.status==='ACTIVE'?'selected':'')+'>ACTIVE</option>'+
             '</select></label></div>'+
-          '<div class="field"><label>HĐ bắt đầu<input type="date" name="contract_start" value="'+(fmtDate(room.contract_start)||'')+'" "></div>'+
-          '<div class="field"><label>HĐ kết thúc<input type="date" name="contract_end" value="'+(fmtDate(room.contract_end)||'')+'" "></div>'+
+          '<div class="field"><label>HĐ bắt đầu (YYYY-MM-DD)<input name="contract_start" value="'+(fmtDate(room.contract_start)||'')+'"></label></div>'+
+          '<div class="field"><label>HĐ kết thúc (YYYY-MM-DD)<input name="contract_end" value="'+(fmtDate(room.contract_end)||'')+'"></label></div>'+
         '</div></div></div>'+
       '<div class="actions-row">'+
         '<button type="button" class="btn" onclick="closeModal()">Hủy</button>'+
@@ -910,6 +872,20 @@
           '<div class="empty">Lỗi tải dữ liệu.</div>';
       });
   });
+  </script>
+
+  <!-- Session & Auth Protection -->
+  <script src="/common/sessionClient.js"></script>
+  <script>
+    // Kiểm tra authentication - redirect về trang login nếu chưa đăng nhập
+    if (!session.isAuthenticated()) {
+      window.location.href = '/index.html';
+    }
+    // Kiểm tra quyền admin
+    if (!session.isAdmin()) {
+      alert('Bạn không có quyền truy cập trang này!');
+      window.location.href = '/index.html';
+    }
   </script>
 </body>
 </html>

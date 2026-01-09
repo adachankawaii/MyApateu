@@ -87,6 +87,28 @@
   </style>
 </head>
 <body>
+  <script>
+    // Kiểm tra authentication ngay lập tức
+    (function() {
+      const SESSION_KEY = 'bluemoon_session';
+      try {
+        const data = localStorage.getItem(SESSION_KEY);
+        if (!data) {
+          window.location.href = '/index.html';
+          return;
+        }
+        const session = JSON.parse(data);
+        const maxAge = 8 * 60 * 60 * 1000;
+        if (Date.now() - session.timestamp > maxAge) {
+          localStorage.removeItem(SESSION_KEY);
+          window.location.href = '/index.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/index.html';
+      }
+    })();
+  </script>
   <header class="toolbar" role="banner">
     <button class="icon-btn" id="Back"></button>
     <div></div>
@@ -157,6 +179,15 @@
         el.classList.add('in');
       });
     });
+  </script>
+
+  <!-- Session & Auth Protection -->
+  <script src="/common/sessionClient.js"></script>
+  <script>
+    // Kiểm tra authentication - redirect về trang login nếu chưa đăng nhập
+    if (!session.isAuthenticated()) {
+      window.location.href = '/index.html';
+    }
   </script>
 </body>
 </html>

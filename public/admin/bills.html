@@ -110,6 +110,33 @@
   </style>
 </head>
 <body>
+  <script>
+    // Kiểm tra authentication ngay lập tức
+    (function() {
+      const SESSION_KEY = 'bluemoon_session';
+      try {
+        const data = localStorage.getItem(SESSION_KEY);
+        if (!data) {
+          window.location.href = '/index.html';
+          return;
+        }
+        const session = JSON.parse(data);
+        const maxAge = 8 * 60 * 60 * 1000;
+        if (Date.now() - session.timestamp > maxAge) {
+          localStorage.removeItem(SESSION_KEY);
+          window.location.href = '/index.html';
+          return;
+        }
+        if (session.role !== 'ADMIN') {
+          alert('Bạn không có quyền truy cập trang này!');
+          window.location.href = '/index.html';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/index.html';
+      }
+    })();
+  </script>
   <!-- ===== Nền toà nhà ===== -->
   <div class="scene" aria-hidden="true">
     <div class="sky-sheen"></div>
@@ -831,6 +858,20 @@
       el('#m_due_date').value = todayISO();
       loadFees();
     })();
+  </script>
+
+  <!-- Session & Auth Protection -->
+  <script src="/common/sessionClient.js"></script>
+  <script>
+    // Kiểm tra authentication - redirect về trang login nếu chưa đăng nhập
+    if (!session.isAuthenticated()) {
+      window.location.href = '/index.html';
+    }
+    // Kiểm tra quyền admin
+    if (!session.isAdmin()) {
+      alert('Bạn không có quyền truy cập trang này!');
+      window.location.href = '/index.html';
+    }
   </script>
 </body>
 </html>

@@ -96,12 +96,11 @@ class ResidentRepositoryImpl extends IRepository {
       // 2) Tạo chủ hộ (person) nếu có
       let personId = null;
       if (personData && personData.full_name) {
-        const isHead = (personData.relation_to_head === 'Chủ hộ') ? 1 : 0;
         const [pRes] = await conn.query(
           `INSERT INTO persons
             (room_id, full_name, cccd, ethnicity, occupation,
-             dob, hometown, relation_to_head, phone, is_head, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+             dob, hometown, relation_to_head, phone, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
           [
             roomId,
             personData.full_name,
@@ -111,8 +110,7 @@ class ResidentRepositoryImpl extends IRepository {
             personData.dob || null,
             personData.hometown || null,
             personData.relation_to_head || 'Chủ hộ',
-            personData.phone || null,
-            isHead
+            personData.phone || null
           ]
         );
         personId = pRes.insertId;
