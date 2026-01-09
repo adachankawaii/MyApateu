@@ -81,6 +81,10 @@
   </style>
 </head>
 <body>
+  <!-- Session & API Client -->
+  <script src="/common/sessionClient.js"></script>
+  <script src="/common/apiClient.js"></script>
+
   <header class="toolbar" role="banner">
     <button class="icon-btn" id="Back"></button>
     <div></div>
@@ -103,7 +107,7 @@
           <div class="vrow"><div class="vlabel">Số điện thoại</div><div class="vvalue" id="v_phone">—</div></div>
 
           <div class="right-actions" style="margin-top:12px">
-            <a class="btn warn" href="/auth/login.html" id="btnLogout">Đăng xuất</a>
+            <button class="btn warn" id="btnLogout">Đăng xuất</button>
           </div>
         </section>
 
@@ -136,7 +140,7 @@
          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M15 18l-6-6 6-6"/>
     </svg>`;
-  backBtn.addEventListener('click', ()=>{ window.location.href = '/admin/home_admin.html'; });
+  backBtn.addEventListener('click', ()=>{ window.location.href = '/admin/dashboard.html'; });
 
   // ===== Anims =====
   const pageRoot = document.getElementById('pageRoot');
@@ -183,7 +187,7 @@
     const res = await fetch('/api/me', { credentials: 'include', cache: 'no-store' });
 
     if (res.status === 401) {  // chưa đăng nhập
-      window.location.href = '/auth/login.html';
+      window.location.href = '/index.html';
       return;
     }
     if (!res.ok) {
@@ -222,4 +226,16 @@
       console.warn(e);
     }
   })();
+
+  // ===== Logout =====
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+      if (window.session && typeof session.logout === 'function') {
+        session.logout('/index.html');
+      } else {
+        window.location.href = '/index.html';
+      }
+    });
+  }
 </script>

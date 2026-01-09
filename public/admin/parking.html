@@ -58,7 +58,7 @@
     .tab{
       flex:1; padding:8px 16px; border-radius:8px; text-align:center; cursor:pointer;
       font-weight:600; transition:all .2s ease; border:none; background:transparent; color:var(--muted);
-    }
+    }z
     .tab.active{background:var(--card); color:var(--text); box-shadow:var(--shadow-2)}
 
     .btn{
@@ -146,9 +146,33 @@
     .payment-method-btn.selected{border-color:#3b82f6;background:#dbeafe}
     [data-theme="dark"] .payment-method-btn:hover{background:#1e3a8a}
     [data-theme="dark"] .payment-method-btn.selected{background:#1e40af}
+
+    /* Session Check - Hidden while loading */
+    body.checking-session { opacity: 0; }
   </style>
 </head>
-<body>
+<body class="checking-session">
+  <!-- Session & API Client -->
+  <script src="../common/sessionClient.js"></script>
+  <script src="../common/apiClient.js"></script>
+  <script>
+    // Check session trước khi load trang
+    (async function() {
+      const isValid = await session.requireAuthAsync('/index.html');
+      if (!isValid) return; // Đã redirect
+      
+      // Kiểm tra role admin
+      if (!session.isAdmin()) {
+        alert('Bạn không có quyền truy cập trang này!');
+        window.location.href = '/index.html';
+        return;
+      }
+      
+      // Session OK, hiện trang
+      document.body.classList.remove('checking-session');
+    })();
+  </script>
+
   <!-- Modal thanh toán -->
   <div id="paymentModal" class="modal">
     <div class="modal-content">
@@ -376,7 +400,7 @@
       </div>
 
       <div style="margin-top:20px; text-align:center">
-        <a href="/admin/home_admin.html" class="btn">← Về trang chủ</a>
+        <a href="/admin/dashboard.html" class="btn">← Về trang chủ</a>
       </div>
     </div>
   </main>
@@ -398,7 +422,7 @@
 
     // Toolbar events
     document.getElementById('btnBack').addEventListener('click', () => {
-      window.location.href = '/admin/home_admin.html';
+      window.location.href = '/admin/dashboard.html';
     });
     document.getElementById('btnNotifications').addEventListener('click', () => {
       alert('Thông báo: Vui lòng kiểm tra các khoản phí gửi xe UNPAID.');
