@@ -1,56 +1,93 @@
-// src/application/api/controllers/AuthController.js
-const { pool } = require('../../../infrastructure/db/dbConnector');
-const { requireAuth } = require('../../middleware/RequireAuthMiddleware');
+// AuthController.js - Authentication Controller
 
-module.exports = function AuthController(router) {
-  router.post('/api/login', async (req, res) => {
+const IController = require('./IController');
+const authService = require('../../../domain/service/AuthService');
+
+class AuthController extends IController {
+  /**
+   * POST /api/login
+   */
+  async login(req, res) {
     try {
-      const username = (req.body?.username || '').trim();
-      const password = req.body?.password || '';
-      if (!username || !password) {
-        return res.status(400).json({ ok: false, message: 'Thiếu tài khoản hoặc mật khẩu' });
+      const { username, password } = req.body || {};
+      const result = await authService.authenticate(username, password);
+
+      if (!result.success) {
+        return res.status(401).json({ ok: false, message: result.message });
       }
 
-      const [rows] = await pool.execute(
-        'SELECT id, username, password_hash, role, person_id FROM users WHERE username = ? LIMIT 1',
-        [username]
-      );
-      const user = rows[0];
+      // Lưu session
+      req.session.userId = result.user.id;
+      req.session.role = result.user.role;
 
-      // Lưu ý: đang so sánh plain text (giữ nguyên như server bạn) :contentReference[oaicite:12]{index=12}
-      if (!user || user.password_hash !== password) {
-        return res.status(401).json({ ok: false, message: 'Sai tên đăng nhập hoặc mật khẩu' });
-      }
-
-      req.session.userId = user.id;
-      res.json({ ok: true, id: user.id, username: user.username, role: user.role, person_id: user.person_id });
+      return res.json({
+        ok: true,
+        id: result.user.id,
+        username: result.user.username,
+        role: result.user.role,
+        person_id: result.user.person_id
+      });
     } catch (e) {
       console.error('/api/login', e);
-      res.status(500).json({ ok: false, message: e.code || 'Server error' });
+      return res.status(500).json({ ok: false, message: e.code || 'Server error' });
     }
-  }); // :contentReference[oaicite:13]{index=13}
+  }
 
-  router.post('/api/logout', (req, res) => {
+  /**
+   * POST /api/logout
+   */
+  async logout(req, res) {
     if (!req.session) return res.json({ ok: true });
+
     req.session.destroy(err => {
       if (err) return res.status(500).json({ ok: false, message: 'Cannot destroy session' });
       res.clearCookie('bluemoon.sid');
-      return res.json({ ok: true });
+      res.json({ ok: true });
     });
-  }); // :contentReference[oaicite:14]{index=14}
+  }
 
-  router.get('/api/me', requireAuth, async (req, res) => {
+  /**
+   * GET /api/me
+   */
+  async me(req, res) {
     try {
-      const [rows] = await pool.query(
-        'SELECT id, username, role, person_id FROM users WHERE id = ? LIMIT 1',
-        [req.session.userId]
-      );
-      const me = rows[0];
-      if (!me) return res.status(404).json({ ok: false, message: 'User not found' });
-      res.json({ ok: true, user: me });
+      const userId = Number(req.session.userId);
+      const user = await authService.getCurrentUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ ok: false, message: 'User not found' });
+      }
+
+      return res.json({ ok: true, user });
     } catch (e) {
       console.error('/api/me', e);
-      res.status(500).json({ ok: false, message: e.code || 'Server error' });
+      return res.status(500).json({ ok: false, message: e.code || 'Server error' });
     }
-  });
-};
+  }
+
+  /**
+   * GET /api/building
+   */
+  getBuildingInfo(req, res) {
+    const info = authService.getBuildingInfo();
+    return res.json(info);
+  }
+
+  /**
+   * GET /api/check-session
+   * Kiểm tra session có hợp lệ không
+   */
+  checkSession(req, res) {
+    if (req.session && req.session.userId) {
+      return res.json({
+        ok: true,
+        authenticated: true,
+        userId: req.session.userId,
+        role: req.session.role
+      });
+    }
+    return res.json({ ok: true, authenticated: false });
+  }
+}
+
+module.exports = new AuthController();

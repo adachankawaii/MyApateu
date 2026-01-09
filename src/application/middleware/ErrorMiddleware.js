@@ -1,14 +1,63 @@
-// src/application/middleware/ErrorMiddleware.js
-module.exports = function errorMiddleware(err, req, res, next) {
-  console.error('[ERROR]', err);
+// ErrorMiddleware.js - Error Handling Middleware
 
-  if (res.headersSent) return next(err);
+/**
+ * Global error handler
+ */
+function errorHandler(err, req, res, next) {
+  console.error('[Error]', err);
 
-  const status = err.statusCode || err.status || 500;
-  const message = err.code || err.message || 'Server error';
+  // Xử lý lỗi duplicate entry
+  if (err.code === 'ER_DUP_ENTRY') {
+    return res.status(409).json({
+      ok: false,
+      message: 'Dữ liệu đã tồn tại (trùng lặp)'
+    });
+  }
 
-  res.status(status).json({
+  // Xử lý lỗi foreign key
+  if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+    return res.status(400).json({
+      ok: false,
+      message: 'Dữ liệu tham chiếu không tồn tại'
+    });
+  }
+
+  // Xử lý lỗi syntax JSON
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      ok: false,
+      message: 'JSON không hợp lệ'
+    });
+  }
+
+  // Lỗi chung
+  res.status(err.status || 500).json({
     ok: false,
-    message
+    message: err.message || 'Internal Server Error'
   });
+}
+
+/**
+ * Async handler wrapper - bắt lỗi async và chuyển cho error middleware
+ */
+function asyncHandler(fn) {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
+
+/**
+ * Not found handler
+ */
+function notFoundHandler(req, res) {
+  res.status(404).json({
+    ok: false,
+    message: `Không tìm thấy route: ${req.method} ${req.path}`
+  });
+}
+
+module.exports = {
+  errorHandler,
+  asyncHandler,
+  notFoundHandler
 };
