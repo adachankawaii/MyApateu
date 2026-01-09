@@ -1,0 +1,58 @@
+:root {
+  --bg-grad-start: #3b82f6;
+  --bg-grad-end: #1e3a8a;
+  --card-bg: #ffffff;
+  --text: #0b1226;
+  --muted: #56607a;
+  --radius: 18px;
+  --shadow: 0 18px 45px rgba(13,35,69,.18);
+}
+
+[data-theme="dark"] {
+  --card-bg: #1f2937;
+  --text: #f3f4f6;
+  --muted: #9ca3af;
+  --bg-grad-start: #1e3a8a;
+  --bg-grad-end: #111827;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: linear-gradient(to bottom right, var(--bg-grad-start), var(--bg-grad-end));
+  min-height: 100vh;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg-grad-start);
+  color: white;
+  cursor: pointer;
+}
+
+input, select {
+  border: 1px solid var(--muted);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px;
+  text-align: left;
+}
