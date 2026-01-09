@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlueMoon — Cư dân</title>
+  <style>
+    :root{
+      --bg-grad-start:#3b82f6; --bg-grad-end:#1e3a8a;
+      --text:#0b1226; --muted:#56607a; --card:#ffffff; --stroke:#e6eaf5;
+      --toolbar-h:64px; --radius:18px;
+      --shadow:0 18px 45px rgba(13,35,69,.18);
+      --shadow-2:0 10px 28px rgba(13,35,69,.16);
+      --icon:#1e3a8a;
+    }
+    /* Dark theme */
+    [data-theme="dark"]{
+      --bg-grad-start:#0f172a; --bg-grad-end:#0b1220;
+      --text:#e5e7eb; --muted:#a3adc2; --card:#0b1226; --stroke:#1f2a44;
+      --shadow:0 18px 45px rgba(0,0,0,.45); --shadow-2:0 10px 28px rgba(0,0,0,.35);
+      --icon:#dbeafe;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 70% 15%, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+      overflow-x:hidden;
+    }
+
+    /* ===== Toolbar ===== */
+    .toolbar{
+      position:fixed; inset:0 0 auto 0; height:var(--toolbar-h);
+      display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+      padding:0 16px; z-index:20; color:#fff;
+      background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.08));
+      backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,.18);
+    }
+    .icon-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:999px; cursor:pointer;
+      background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 6px 16px rgba(0,0,0,.25); transition:transform .12s ease, background .12s ease;
+    }
+    .icon-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.2)}
+    .search{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18)}
+    .search input{flex:1;height:100%;background:transparent;border:0;outline:0;color:#fff}
+    .search input::placeholder{color:rgba(255,255,255,.85)}
+
+    /* ===== Main wrapper ===== */
+    .main{min-height:100%; padding-top:calc(var(--toolbar-h) + 28px); padding-bottom:40px;}
+    .container{width:min(1180px,92vw); margin:0 auto;}
+
+    .welcome{display:flex; align-items:center; gap:10px; color:#dbeafe; font-weight:800; margin:14px 2px;}
+    .welcome .dot{width:8px;height:8px;border-radius:999px;background:#22c55e;box-shadow:0 0 12px #22c55e}
+    .title{margin:0 2px 18px; font-size:32px; font-weight:900; letter-spacing:.2px; color:#fff;}
+
+    /* ===== Grid ===== */
+    .grid{ display:grid; gap:22px; grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 980px){ .grid{grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width: 620px){ .grid{grid-template-columns: 1fr;} }
+
+    .tile-wire{
+      border:1px solid var(--stroke);
+      border-radius:10px; overflow:hidden; background:var(--card);
+      cursor:pointer; box-shadow: var(--shadow-2);
+      transition: transform .12s ease, box-shadow .12s ease;
+      display:grid; grid-template-rows: 120px 64px;
+    }
+    .tile-wire:hover{ transform:translateY(-2px); box-shadow: var(--shadow); }
+
+    /* top with sprite icon */
+    .tile-wire .top{
+      background:linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.35));
+      display:grid; place-items:center;
+    }
+    [data-theme="dark"] .tile-wire .top{
+      background:linear-gradient(180deg, rgba(17,24,39,.65), rgba(17,24,39,.35));
+    }
+    .tile-wire .top .ico{
+      width:64px; height:64px; fill:var(--icon);
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.18));
+    }
+
+    .tile-wire .bottom{
+      background:#e6e6e6; border-top:1px solid var(--stroke);
+      padding:8px 12px; display:flex; flex-direction:column; justify-content:center;
+    }
+    /* Dark: dải chữ màu trắng (light giữ nguyên) */
+    [data-theme="dark"] .tile-wire .bottom{ background:#ffffff; }
+    .tile-wire .title{ margin:0; font-weight:800; font-size:14px; line-height:1.1; color:#111827; }
+    .tile-wire .desc{ margin:2px 0 0; font-size:12px; color:#374151; line-height:1.2; }
+
+    /* ===== Sidebar (Account/Web settings) ===== */
+    .overlay{position:fixed; inset:0; background:rgba(0,0,0,.35); opacity:0; visibility:hidden; transition:.22s ease; z-index:29}
+    .overlay.open{opacity:1; visibility:visible}
+
+    .sidebar{
+      position:fixed; top:0; right:0; height:100%; width:min(380px,94vw);
+      background:var(--card); color:var(--text); border-left:1px solid var(--stroke);
+      transform:translateX(100%); transition:transform .28s ease; z-index:30; display:flex; flex-direction:column;
+      box-shadow: var(--shadow);
+    }
+    .sidebar.open{transform:translateX(0)}
+    .side-header{display:flex; align-items:center; gap:12px; padding:16px; border-bottom:1px solid var(--stroke)}
+    .avatar{width:48px;height:48px;border-radius:999px;background:linear-gradient(135deg,#60a5fa,#3b82f6); display:grid; place-items:center; color:#0b1226; font-weight:900}
+    .who .name{font-weight:900}
+    .who .role{color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.3px}
+    .side-body{padding:14px; display:grid; gap:12px; overflow:auto}
+
+    .setting{
+      border:1px solid var(--stroke); border-radius:14px; padding:12px 14px; background:color-mix(in oklab, var(--card) 98%, transparent);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .setting h4{margin:0; font-size:14px}
+    .setting small{color:var(--muted)}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; border:1px solid var(--stroke); background:var(--card); cursor:pointer}
+    .btn.primary{background:#2563eb; color:#fff; border-color:#2563eb}
+    .btn.warn{background:#ef4444; color:#fff; border-color:#ef4444}
+
+    .seg{display:inline-flex; border:1px solid var(--stroke); border-radius:999px; overflow:hidden; background:var(--card)}
+    .seg button{padding:8px 12px; border:0; background:transparent; color:var(--muted); cursor:pointer; font-weight:700}
+    .seg button.active{background:#2563eb; color:#fff}
+
+    .switch{position:relative; width:48px; height:28px; border-radius:999px; background:#cbd5e1; border:1px solid var(--stroke); cursor:pointer}
+    .switch::after{
+      content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:999px; background:#fff; transition:left .2s ease;
+      box-shadow:0 3px 8px rgba(0,0,0,.25)
+    }
+    .switch.on{background:#2563eb}
+    .switch.on::after{left:23px}
+
+    /* ===== PAGER (‹ / ›) ===== */
+    .pager{
+      margin-top:14px; display:flex; align-items:center; gap:10px; justify-content:flex-end;
+    }
+    .pager .nav{
+      width:42px; height:42px; border-radius:12px; border:1px solid var(--stroke);
+      background:var(--card); cursor:pointer; display:grid; place-items:center;
+      box-shadow: var(--shadow-2);
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .pager .nav:active{ transform: scale(.98); }
+    .pager .nav[disabled]{opacity:.55; cursor:not-allowed; box-shadow:none}
+
+    /* DARK: nút trắng, icon/chữ tối */
+    [data-theme="dark"] .pager .nav{
+      background:#ffffff; border-color:#ffffff22; color:#0b1226;
+    }
+
+    /* Giữ cụm số không xê dịch */
+    .pager .dots{
+      font-weight:700; letter-spacing:.3px;
+      min-width:4.5ch; text-align:center;
+      color:#dbeafe;
+    }
+    [data-theme="dark"] .pager .dots{ color:#c7d2fe; }
+
+    /* Hiệu ứng slide mượt cho grid */
+    .grid.anim { animation: slideIn .28s ease both; }
+    @keyframes slideIn { 
+      from { opacity:0; transform: translateX(var(--dx, 0)); } 
+      to   { opacity:1; transform:none; } 
+    }
+
+    @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important} }
+
+    /* Session Check - Hidden while loading */
+    body.checking-session { opacity: 0; }
+  </style>
+</head>
+<body class="checking-session">
+  <!-- Session & API Client -->
+  <script src="../common/sessionClient.js"></script>
+  <script src="../common/apiClient.js"></script>
+  <script>
+    // Check session trước khi load trang
+    (async function() {
+      const isValid = await session.requireAuthAsync('/index.html');
+      if (!isValid) return; // Đã redirect
+      
+      // Kiểm tra role resident (hoặc admin cũng được xem)
+      const userSession = session.get();
+      if (!userSession || !['RESIDENT', 'ADMIN'].includes(userSession.role)) {
+        alert('Bạn không có quyền truy cập trang này!');
+        window.location.href = '/index.html';
+        return;
+      }
+      
+      // Session OK, hiện trang
+      document.body.classList.remove('checking-session');
+    })();
+  </script>
+
+  <!-- ===== SVG SPRITE ===== -->
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="ico-bills" viewBox="0 0 24 24"><path d="M4 4h16v14H4V4Zm2 3h12v2H6V7Zm0 4h8v2H6v-2Zm0 4h6v2H6v-2Z"/></symbol>
+    <symbol id="ico-maintenance" viewBox="0 0 24 24"><path d="M21 7.5 16.5 3 9 10.5l-1 3.5 3.5-1L21 7.5ZM7 19h10v2H7v-2Z"/></symbol>
+    <symbol id="ico-announcements" viewBox="0 0 24 24"><path d="M3 10h5l7-4v12l-7-4H3v-4Zm16 0h2v4h-2v-4Z"/></symbol>
+    <symbol id="ico-parking" viewBox="0 0 24 24"><path d="M5 4h8a5 5 0 1 1 0 10H9v6H5V4Zm4 6h4a2 2 0 1 0 0-4H9v4Z"/></symbol>
+    <symbol id="ico-profile" viewBox="0 0 24 24"><path d="M12 12c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6Zm0 2c-4.418 0-8 2.239-8 5v3h16v-3c0-2.761-3.582-5-8-5Z"/></symbol>
+    <symbol id="ico-calendar" viewBox="0 0 24 24"><path d="M7 2h2v3h6V2h2v3h3v17H4V5h3V2Zm12 7H5v11h14V9Z"/></symbol>
+    <symbol id="ico-contact" viewBox="0 0 24 24"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5Zm2 0v14h14V5H5Zm2 2h10v2H7V7Zm0 4h6v2H7v-2Zm0 4h8v2H7v-2Z"/></symbol>
+    <symbol id="ico-feedback" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.959 9.959 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2Zm0 18c-1.74 0-3.35-.56-4.66-1.51L5 19l.51-2.34A7.96 7.96 0 0 1 4 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8Z"/></symbol>
+  </svg>
+
+  <!-- ===== Toolbar ===== -->
+  <header class="toolbar" role="banner">
+    <button class="icon-btn" id="btnDrawer" aria-label="Mở cài đặt tài khoản" aria-controls="drawer" aria-expanded="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 6h16M4 12h12M4 18h16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <label class="search" for="siteSearch" aria-label="Tìm kiếm">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" stroke="white" stroke-width="1.8" opacity=".9"/>
+        <path d="M20 20l-3.2-3.2" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+      </svg>
+      <input id="siteSearch" type="search" placeholder="Tìm kiếm nhanh..." />
+    </label>
+    <button class="icon-btn" id="btnNoti" aria-label="Thông báo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 22a2.5 2.5 0 0 0 2.4-2H9.6A2.5 2.5 0 0 0 12 22Z" fill="white" opacity=".9"/>
+        <path d="M19 17H5l1.2-1.8A2 2 0 0 0 7 14v-3a5 5 0 1 1 10 0v3c0 .4.1.8.3 1.2L19 17Z" stroke="white" stroke-width="1.8" fill="none" opacity=".9"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ===== Overlay & Sidebar ===== -->
+  <div class="overlay" id="overlay" aria-hidden="true"></div>
+  <aside class="sidebar" id="drawer" role="complementary" aria-label="Cài đặt tài khoản & Web">
+    <div class="side-header">
+      <div class="avatar">R</div>
+      <div class="who">
+        <div class="name">Cư dân Resident</div>
+        <div class="role" id="roleLabel">Cư dân — Căn hộ A101</div>
+      </div>
+      <button class="btn" id="btnCloseDrawer" aria-label="Đóng">✕</button>
+    </div>
+
+    <div class="side-body">
+      <div class="setting">
+        <div><h4 id="profileTitle">Hồ sơ cá nhân</h4><small id="profileSub">Xem & cập nhật thông tin của bạn.</small></div>
+        <button class="btn" onclick="alert(t('feature.pending'))">→</button>
+      </div>
+
+      <div class="setting">
+        <div><h4 id="pwdTitle">Đổi mật khẩu</h4><small id="pwdSub">Tăng bảo mật tài khoản.</small></div>
+        <button class="btn" onclick="alert(t('feature.pending'))">→</button>
+      </div>
+
+      <div class="setting">
+        <div><h4 id="themeTitle">Giao diện</h4><small id="themeSub">Chuyển sáng / tối.</small></div>
+        <div class="switch" id="themeSwitch" role="switch" aria-checked="false"></div>
+      </div>
+
+      <div class="setting">
+        <div><h4 id="langTitle">Ngôn ngữ</h4><small id="langSub">Chọn ngôn ngữ hiển thị.</small></div>
+        <div class="seg" id="langSeg">
+          <button data-lang="vi" class="active">VI</button>
+          <button data-lang="en">EN</button>
+        </div>
+      </div>
+
+      <div class="setting">
+        <div><h4 id="helpTitle">Trợ giúp - Hỗ trợ</h4><small id="helpSub">Gửi yêu cầu hỗ trợ kỹ thuật.</small></div>
+        <button class="btn" onclick="alert(t('feature.pending'))">→</button>
+      </div>
+
+      <div class="setting">
+        <div><h4 id="contactTitle">Liên hệ Ban quản lý</h4><small id="contactSub">Thông tin liên hệ và giờ làm việc.</small></div>
+        <button class="btn" onclick="window.location.href='contact.html'">→</button>
+      </div>
+
+      <div class="setting">
+        <div><h4 id="logoutTitle">Đăng xuất</h4><small id="logoutSub">Thoát và quay lại màn hình đăng nhập.</small></div>
+        <button class="btn warn" id="btnLogout">⇦</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Main Content ===== -->
+  <main class="main">
+    <div class="container">
+      <div class="welcome"><span class="dot"></span><span id="welcomeText">Chào mừng cư dân đến BlueMoon!</span></div>
+      <h1 class="title" id="pageTitle">Cổng thông tin cư dân</h1>
+
+      <section class="grid" id="featureGrid" aria-label="Các dịch vụ cư dân"></section>
+
+      <!-- PAGER -->
+      <div class="pager" id="pager">
+        <button class="nav" id="btnPrev" aria-label="Xem các mục trước">‹</button>
+        <div class="dots" id="dots">1 / 1</div>
+        <button class="nav" id="btnNext" aria-label="Xem các mục sau">›</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* ================= I18N ================= */
+    const I18N = {
+      vi: {
+        welcome: "Chào mừng cư dân đến BlueMoon!",
+        pageTitle: "Cổng thông tin cư dân",
+        feature: {
+          bills_t: "Hóa đơn & Thanh toán",
+          bills_d: "Xem phí dịch vụ, tiền điện nước và thanh toán online.",
+          maintenance_t: "Yêu cầu bảo trì",
+          maintenance_d: "Gửi phiếu bảo trì, theo dõi tiến độ xử lý.",
+          announcements_t: "Thông báo chung cư",
+          announcements_d: "Tin tức, thông báo và quy định mới.",
+          parking_t: "Thẻ xe & Bãi đậu",
+          parking_d: "Đăng ký thẻ xe, xem tình trạng bãi đậu.",
+          profile_t: "Thông tin cá nhân",
+          profile_d: "Cập nhật hồ sơ, thông tin liên hệ.",
+          calendar_t: "Lịch sự kiện",
+          calendar_d: "Sự kiện cộng đồng, lịch bảo trì chung cư.",
+          contact_t: "Liên hệ Ban quản lý",
+          contact_d: "Thông tin liên hệ, giờ làm việc.",
+          feedback_t: "Góp ý & Phản hồi",
+          feedback_d: "Đánh giá dịch vụ, góp ý cải thiện.",
+          pending: "Tính năng demo — bạn có thể gắn route thực tế."
+        },
+        sidebar: {
+          role: "Cư dân — Căn hộ A101",
+          profileTitle: "Hồ sơ cá nhân",
+          profileSub: "Xem & cập nhật thông tin của bạn.",
+          pwdTitle: "Đổi mật khẩu",
+          pwdSub: "Tăng bảo mật tài khoản.",
+          themeTitle: "Giao diện",
+          themeSub: "Chuyển sáng / tối.",
+          langTitle: "Ngôn ngữ",
+          langSub: "Chọn ngôn ngữ hiển thị.",
+          helpTitle: "Trợ giúp - Hỗ trợ",
+          helpSub: "Gửi yêu cầu hỗ trợ kỹ thuật.",
+          contactTitle: "Liên hệ Ban quản lý",
+          contactSub: "Thông tin liên hệ và giờ làm việc.",
+          logoutTitle: "Đăng xuất",
+          logoutSub: "Thoát và quay lại màn hình đăng nhập."
+        }
+      },
+      en: {
+        welcome: "Welcome resident to BlueMoon!",
+        pageTitle: "Resident Information Portal",
+        feature: {
+          bills_t: "Bills & Payments",
+          bills_d: "View service fees, utilities and pay online.",
+          maintenance_t: "Maintenance Requests",
+          maintenance_d: "Submit maintenance tickets, track progress.",
+          announcements_t: "Building Announcements",
+          announcements_d: "News, notices and new regulations.",
+          parking_t: "Parking Cards & Spots",
+          parking_d: "Register parking cards, check parking status.",
+          profile_t: "Personal Information",
+          profile_d: "Update profile and contact information.",
+          calendar_t: "Events Calendar",
+          calendar_d: "Community events and building maintenance.",
+          contact_t: "Contact Management",
+          contact_d: "Contact info and office hours.",
+          feedback_t: "Feedback & Suggestions",
+          feedback_d: "Rate services, suggest improvements.",
+          pending: "Demo feature — wire up your real routes."
+        },
+        sidebar: {
+          role: "Resident — Unit A101",
+          profileTitle: "Profile",
+          profileSub: "View & update your info.",
+          pwdTitle: "Change password",
+          pwdSub: "Increase account security.",
+          themeTitle: "Theme",
+          themeSub: "Toggle light / dark.",
+          langTitle: "Language",
+          langSub: "Choose display language.",
+          helpTitle: "Help & Support",
+          helpSub: "Send a support request.",
+          contactTitle: "Contact Management",
+          contactSub: "Contact info and office hours.",
+          logoutTitle: "Sign out",
+          logoutSub: "Back to login screen."
+        }
+      }
+    };
+
+    const state = {
+      lang: localStorage.getItem('bm_lang') || 'vi',
+      theme: localStorage.getItem('bm_theme') || 'light',
+      page: 0,            // trang slider hiện tại
+      pageSize: 6,        // mỗi trang 6 ô
+      lastDir: 'next'     // 'next' | 'prev' để áp hiệu ứng
+    };
+
+    function t(path){
+      const parts = path.split('.');
+      let cur = I18N[state.lang];
+      for(const p of parts){ cur = cur?.[p]; }
+      return cur ?? path;
+    }
+
+    function renderTexts(){
+      welcomeText.textContent = t('welcome');
+      pageTitle.textContent   = t('pageTitle');
+
+      roleLabel.textContent   = t('sidebar.role');
+      profileTitle.textContent= t('sidebar.profileTitle');
+      profileSub.textContent  = t('sidebar.profileSub');
+      pwdTitle.textContent    = t('sidebar.pwdTitle');
+      pwdSub.textContent      = t('sidebar.pwdSub');
+      themeTitle.textContent  = t('sidebar.themeTitle');
+      themeSub.textContent    = t('sidebar.themeSub');
+      langTitle.textContent   = t('sidebar.langTitle');
+      langSub.textContent     = t('sidebar.langSub');
+      helpTitle.textContent   = t('sidebar.helpTitle');
+      helpSub.textContent     = t('sidebar.helpSub');
+      contactTitle.textContent = t('sidebar.contactTitle');
+      contactSub.textContent   = t('sidebar.contactSub');
+      logoutTitle.textContent = t('sidebar.logoutTitle');
+      logoutSub.textContent   = t('sidebar.logoutSub');
+    }
+
+    const tiles = [
+      { id:'bills',         t:'feature.bills_t',         d:'feature.bills_d' },
+      { id:'maintenance',   t:'feature.maintenance_t',   d:'feature.maintenance_d' },
+      { id:'announcements', t:'feature.announcements_t', d:'feature.announcements_d' },
+      { id:'parking',       t:'feature.parking_t',       d:'feature.parking_d' },
+      { id:'profile',       t:'feature.profile_t',       d:'feature.profile_d' },
+      { id:'calendar',      t:'feature.calendar_t',      d:'feature.calendar_d' },
+      { id:'contact',       t:'feature.contact_t',       d:'feature.contact_d' },
+      { id:'feedback',      t:'feature.feedback_t',      d:'feature.feedback_d' },
+    ];
+
+    const ICON_MAP = {
+      bills: 'ico-bills',
+      maintenance: 'ico-maintenance',
+      announcements: 'ico-announcements',
+      parking: 'ico-parking',
+      profile: 'ico-profile',
+      calendar: 'ico-calendar',
+      contact: 'ico-contact',
+      feedback: 'ico-feedback',
+    };
+    const svgUse = (tileId) =>
+      `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#${ICON_MAP[tileId]||'ico-profile'}"></use></svg>`;
+
+    function renderGrid(){
+      const grid = document.getElementById('featureGrid');
+      grid.innerHTML = '';
+
+      const start = state.page * state.pageSize;
+      const end = start + state.pageSize;
+      const slice = tiles.slice(start, end);
+
+      slice.forEach(tile=>{
+        const el = document.createElement('article');
+        el.className = 'tile-wire';
+        el.innerHTML = `
+          <div class="top" aria-hidden="true">${svgUse(tile.id)}</div>
+          <div class="bottom">
+            <h4 class="title">${t(tile.t)}</h4>
+            <div class="desc">${t(tile.d)}</div>
+          </div>`;
+        el.addEventListener('click', ()=> {
+          // Navigate to specific feature pages
+          switch(tile.id) {
+            case 'bills':
+              window.location.href = 'bills.html';
+              break;
+            case 'maintenance':
+              window.location.href = 'maintenance.html';
+              break;
+            case 'announcements':
+              window.location.href = 'announcements.html';
+              break;
+            case 'profile':
+              window.location.href = 'profile.html';
+              break;
+            case 'parking':
+              window.location.href = 'parking.html';
+              break;
+            case 'calendar':
+              window.location.href = 'calendar.html';
+              break;
+            case 'contact':
+              window.location.href = 'contact.html';
+              break;
+            case 'feedback':
+              window.location.href = 'feedback.html';
+              break;
+            default:
+              alert(`${t(tile.t)} — ${t('feature.pending')}`);
+          }
+        });
+        grid.appendChild(el);
+      });
+
+      // cập nhật pager
+      const totalPages = Math.ceil(tiles.length / state.pageSize);
+      dots.textContent = `${state.page + 1} / ${totalPages}`;
+      btnPrev.disabled = state.page <= 0;
+      btnNext.disabled = state.page >= totalPages - 1;
+
+      // === Hiệu ứng slide theo hướng ===
+      grid.style.setProperty('--dx', state.lastDir === 'next' ? '24px' : '-24px');
+      grid.classList.remove('anim'); // reset nếu còn class
+      void grid.offsetWidth;         // force reflow để restart animation
+      grid.classList.add('anim');
+    }
+
+    /* ===== Drawer ===== */
+    const btnDrawer = document.getElementById('btnDrawer');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const btnClose = document.getElementById('btnCloseDrawer');
+
+    function openDrawer(){
+      drawer.classList.add('open'); overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden','false'); btnDrawer.setAttribute('aria-expanded','true');
+      btnClose && btnClose.focus({preventScroll:true}); document.body.style.overflow='hidden';
+    }
+    function closeDrawer(){
+      drawer.classList.remove('open'); overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden','true'); btnDrawer.setAttribute('aria-expanded','false');
+      document.body.style.overflow=''; btnDrawer.focus({preventScroll:true});
+    }
+    btnDrawer.addEventListener('click', openDrawer);
+    btnClose.addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    window.addEventListener('keydown', e=>{ if(e.key==='Escape' && drawer.classList.contains('open')) closeDrawer(); });
+
+    /* ===== Theme toggle ===== */
+    function applyTheme(){
+      document.documentElement.setAttribute('data-theme', state.theme);
+      if(state.theme === 'dark'){ themeSwitch.classList.add('on'); themeSwitch.setAttribute('aria-checked','true'); }
+      else { themeSwitch.classList.remove('on'); themeSwitch.setAttribute('aria-checked','false'); }
+      localStorage.setItem('bm_theme', state.theme);
+    }
+    themeSwitch.addEventListener('click', ()=>{
+      state.theme = (state.theme === 'light') ? 'dark' : 'light';
+      applyTheme();
+    });
+
+    /* ===== Language toggle ===== */
+    langSeg.addEventListener('click', (e)=>{
+      if(e.target.tagName !== 'BUTTON') return;
+      const lang = e.target.getAttribute('data-lang');
+      state.lang = lang; localStorage.setItem('bm_lang', lang);
+      [...langSeg.querySelectorAll('button')].forEach(b=>b.classList.toggle('active', b.dataset.lang===lang));
+      renderTexts(); renderGrid();
+    });
+
+    /* ===== Pager events ===== */
+    btnPrev.addEventListener('click', ()=>{
+      if(state.page>0){ state.lastDir = 'prev'; state.page--; renderGrid(); }
+    });
+    btnNext.addEventListener('click', ()=>{
+      const totalPages = Math.ceil(tiles.length / state.pageSize);
+      if(state.page < totalPages-1){ state.lastDir = 'next'; state.page++; renderGrid(); }
+    });
+
+    /* ===== Misc ===== */
+    btnNoti.addEventListener('click', ()=> alert('2 notifications (demo).'));
+    siteSearch.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); alert('Search: '+e.currentTarget.value);} });
+    btnLogout.addEventListener('click', ()=> { 
+      if (window.session && typeof session.logout === 'function') {
+        session.logout('/index.html');
+      } else {
+        window.location.href = '/index.html';
+      }
+    });
+
+    /* ===== Init ===== */
+    (function init(){
+      document.documentElement.setAttribute('data-theme', state.theme);
+      applyTheme();
+      [...langSeg.querySelectorAll('button')].forEach(b=>b.classList.toggle('active', b.dataset.lang===state.lang));
+      renderTexts();
+      renderGrid();
+    })();
+  </script>
+
+  <!-- quick refs for elements used in JS -->
+  <script>
+    const welcomeText = document.getElementById('welcomeText');
+    const pageTitle   = document.getElementById('pageTitle');
+    const roleLabel   = document.getElementById('roleLabel');
+    const profileTitle= document.getElementById('profileTitle');
+    const profileSub  = document.getElementById('profileSub');
+    const pwdTitle    = document.getElementById('pwdTitle');
+    const pwdSub      = document.getElementById('pwdSub');
+    const themeTitle  = document.getElementById('themeTitle');
+    const themeSub    = document.getElementById('themeSub');
+    const langTitle   = document.getElementById('langTitle');
+    const langSub     = document.getElementById('langSub');
+    const helpTitle   = document.getElementById('helpTitle');
+    const helpSub     = document.getElementById('helpSub');
+    const contactTitle = document.getElementById('contactTitle');
+    const contactSub   = document.getElementById('contactSub');
+    const logoutTitle = document.getElementById('logoutTitle');
+    const logoutSub   = document.getElementById('logoutSub');
+    const themeSwitch = document.getElementById('themeSwitch');
+    const langSeg     = document.getElementById('langSeg');
+    const btnNoti     = document.getElementById('btnNoti');
+    const siteSearch  = document.getElementById('siteSearch');
+    const btnLogout   = document.getElementById('btnLogout');
+    const btnPrev     = document.getElementById('btnPrev');
+    const btnNext     = document.getElementById('btnNext');
+    const dots        = document.getElementById('dots');
+  </script>
+</body>
+</html>
