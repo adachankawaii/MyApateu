@@ -24,7 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const pool = mysql.createPool({
   host: '127.0.0.1',
   user: 'aduser',
-  password: 'lienquaṇ̉',
+  password: 'lienquan123!',
   database: 'bluedb',
   waitForConnections: true,
   connectionLimit: 5,
