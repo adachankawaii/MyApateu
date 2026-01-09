@@ -144,9 +144,34 @@
       padding: 40px;
       color: var(--muted);
     }
+
+    /* Session Check - Hidden while loading */
+    body.checking-session { opacity: 0; }
   </style>
 </head>
-<body>
+<body class="checking-session">
+  <!-- Session & API Client -->
+  <script src="../common/sessionClient.js"></script>
+  <script src="../common/apiClient.js"></script>
+  <script>
+    // Check session trước khi load trang
+    (async function() {
+      const isValid = await session.requireAuthAsync('/index.html');
+      if (!isValid) return; // Đã redirect
+      
+      // Kiểm tra role resident (hoặc admin cũng được xem)
+      const userSession = session.get();
+      if (!userSession || !['RESIDENT', 'ADMIN'].includes(userSession.role)) {
+        alert('Bạn không có quyền truy cập trang này!');
+        window.location.href = '/index.html';
+        return;
+      }
+      
+      // Session OK, hiện trang
+      document.body.classList.remove('checking-session');
+    })();
+  </script>
+
   <header class="toolbar">
     <button class="icon-btn" id="btnBack" aria-label="Quay lại">←</button>
     <span style="font-weight: 800; font-size: 18px; flex: 1;">Hồ sơ cá nhân</span>

@@ -64,6 +64,39 @@ const session = {
   },
 
   /**
+   * Verify session với server
+   * Kiểm tra session có hợp lệ trên server không
+   */
+  async verifyWithServer() {
+    try {
+      const response = await fetch('/api/check-session', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      
+      if (!data.ok || !data.authenticated) {
+        // Session không hợp lệ trên server, xóa local session
+        this.clear();
+        return false;
+      }
+      
+      // Cập nhật session local nếu cần
+      const localSession = this.get();
+      if (localSession && localSession.id !== data.userId) {
+        // Local session không khớp với server, xóa và yêu cầu đăng nhập lại
+        console.warn('[Session] Local session mismatch, clearing...', {local: localSession.id, server: data.userId});
+        this.clear();
+        return false;
+      }
+      
+      return true;
+    } catch (e) {
+      console.error('Session verify error:', e);
+      return false;
+    }
+  },
+
+  /**
    * Kiểm tra có phải admin không
    */
   isAdmin() {
@@ -81,12 +114,42 @@ const session = {
 
   /**
    * Redirect nếu chưa đăng nhập
+   * Có thể kiểm tra với server (async)
    */
-  requireAuth(redirectUrl = '/index.html') {
+  requireAuth(redirectUrl = '/index.html', verifyServer = false) {
     if (!this.isAuthenticated()) {
       window.location.href = redirectUrl;
       return false;
     }
+    
+    if (verifyServer) {
+      // Async check với server
+      this.verifyWithServer().then(valid => {
+        if (!valid) {
+          window.location.href = redirectUrl;
+        }
+      });
+    }
+    
+    return true;
+  },
+
+  /**
+   * Redirect nếu chưa đăng nhập (async version)
+   * Luôn kiểm tra với server
+   */
+  async requireAuthAsync(redirectUrl = '/index.html') {
+    if (!this.isAuthenticated()) {
+      window.location.href = redirectUrl;
+      return false;
+    }
+    
+    const valid = await this.verifyWithServer();
+    if (!valid) {
+      window.location.href = redirectUrl;
+      return false;
+    }
+    
     return true;
   },
 
